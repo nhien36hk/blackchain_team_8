@@ -1,0 +1,3160 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+================================================================
+File Summary
+================================================================
+
+Purpose:
+--------
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+
+File Format:
+------------
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Multiple file entries, each consisting of:
+  a. A separator line (================)
+  b. The file path (File: path/to/file)
+  c. Another separator line
+  d. The full contents of the file
+  e. A blank line
+
+Usage Guidelines:
+-----------------
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+
+Notes:
+------
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+
+Additional Info:
+----------------
+
+================================================================
+Directory Structure
+================================================================
+.repomix/
+  bundles.json
+contracts/
+  2_deploy_contracts.js
+  Migrations.sol
+  Voting.sol
+Database_API/
+  .env
+  .gitignore
+  main.py
+migrations/
+  1_initial_migration.js
+src/
+  css/
+    admin.css
+    index.css
+    login.css
+  html/
+    admin.html
+    index.html
+    login.html
+  js/
+    app.js
+    login.js
+  .gitignore
+.gitignore
+index.js
+LICENSE
+mining_coint.py
+package.json
+README.md
+truffle-config.js
+
+================================================================
+Files
+================================================================
+
+================
+File: .repomix/bundles.json
+================
+{
+  "bundles": {}
+}
+
+================
+File: contracts/2_deploy_contracts.js
+================
+var Voting = artifacts.require("./Voting.sol")
+
+module.exports = function(deployer) {
+  deployer.deploy(Voting)
+}
+
+================
+File: contracts/Migrations.sol
+================
+pragma solidity ^0.5.15;
+
+contract Migrations {
+  address public owner;
+  uint public last_completed_migration;
+
+  modifier restricted() {
+    require(msg.sender == owner, "Access restricted to owner");
+    _;
+  }
+
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  function setCompleted(uint completed) public restricted {
+    last_completed_migration = completed;
+  }
+
+  function upgrade(address new_address) public restricted {
+    Migrations upgraded = Migrations(new_address);
+    upgraded.setCompleted(last_completed_migration);
+  }
+}
+
+================
+File: contracts/Voting.sol
+================
+pragma solidity ^0.5.15;
+
+contract Voting {
+    struct Candidate {
+        uint id;
+        string name;
+        string party; 
+        uint voteCount;
+    }
+
+    mapping (uint => Candidate) public candidates;
+    mapping (address => bool) public voters;
+
+    
+    uint public countCandidates;
+    uint256 public votingEnd;
+    uint256 public votingStart;
+
+
+    function addCandidate(string memory name, string memory party) public  returns(uint) {
+               countCandidates ++;
+               candidates[countCandidates] = Candidate(countCandidates, name, party, 0);
+               return countCandidates;
+    }
+   
+    function vote(uint candidateID) public {
+
+       require((votingStart <= now) && (votingEnd > now));
+   
+       require(candidateID > 0 && candidateID <= countCandidates);
+
+       //daha önce oy kullanmamıs olmalı
+       require(!voters[msg.sender]);
+              
+       voters[msg.sender] = true;
+       
+       candidates[candidateID].voteCount ++;      
+    }
+    
+    function checkVote() public view returns(bool){
+        return voters[msg.sender];
+    }
+       
+    function getCountCandidates() public view returns(uint) {
+        return countCandidates;
+    }
+
+    function getCandidate(uint candidateID) public view returns (uint,string memory, string memory,uint) {
+        return (candidateID,candidates[candidateID].name,candidates[candidateID].party,candidates[candidateID].voteCount);
+    }
+
+    function setDates(uint256 _startDate, uint256 _endDate) public{
+        require((votingEnd == 0) && (votingStart == 0) && (_startDate + 1000000 > now) && (_endDate > _startDate));
+        votingEnd = _endDate;
+        votingStart = _startDate;
+    }
+
+    function getDates() public view returns (uint256,uint256) {
+      return (votingStart,votingEnd);
+    }
+}
+
+================
+File: Database_API/.env
+================
+MYSQL_USER="root"
+MYSQL_PASSWORD=""
+MYSQL_HOST="localhost"
+MYSQL_DB="voter_db"
+SECRET_KEY="d2b861a623b1d0e89f7c91c313bce1db34fbce8356ca80cf38b72e4c5a832ed5f0fa7136ef0ed5c32641308daa88c29c108d85835afcf37e5385c8e2c4cacee6"
+
+================
+File: Database_API/.gitignore
+================
+__pycache__
+
+================
+File: Database_API/main.py
+================
+# Import required modules
+import dotenv
+import os
+import mysql.connector
+from fastapi import FastAPI, HTTPException, status, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
+from mysql.connector import errorcode
+import jwt
+
+# Loading the environment variables
+dotenv.load_dotenv()
+
+# Initialize the todoapi app
+app = FastAPI()
+
+# Define the allowed origins for CORS
+origins = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Connect to the MySQL database
+try:
+    cnx = mysql.connector.connect(
+        user=os.environ['MYSQL_USER'],
+        password=os.environ['MYSQL_PASSWORD'],
+        host=os.environ['MYSQL_HOST'],
+        database=os.environ['MYSQL_DB'],
+    )
+    cursor = cnx.cursor()
+except mysql.connector.Error as err:
+    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        print("Something is wrong with your user name or password")
+    elif err.errno == errorcode.ER_BAD_DB_ERROR:
+        print("Database does not exist")
+    else:
+        print(err)
+
+# Define the authentication middleware
+async def authenticate(request: Request):
+    try:
+        api_key = request.headers.get('authorization').replace("Bearer ", "")
+        cursor.execute("SELECT * FROM voters WHERE voter_id = %s", (api_key,))
+        if api_key not in [row[0] for row in cursor.fetchall()]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Forbidden"
+            )
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Forbidden"
+        )
+
+# Define the POST endpoint for login
+@app.get("/login")
+async def login(request: Request, voter_id: str, password: str):
+    await authenticate(request)
+    role = await get_role(voter_id, password)
+
+    # Assuming authentication is successful, generate a token
+    token = jwt.encode({'password': password, 'voter_id': voter_id, 'role': role}, os.environ['SECRET_KEY'], algorithm='HS256')
+
+    return {'token': token, 'role': role}
+
+# Replace 'admin' with the actual role based on authentication
+async def get_role(voter_id, password):
+    try:
+        cursor.execute("SELECT role FROM voters WHERE voter_id = %s AND password = %s", (voter_id, password,))
+        role = cursor.fetchone()
+        if role:
+            return role[0]
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid voter id or password"
+            )
+    except mysql.connector.Error as err:
+        print(err)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error"
+        )
+
+================
+File: migrations/1_initial_migration.js
+================
+var Voting = artifacts.require("Voting")
+
+module.exports = function(deployer) {
+  deployer.deploy(Voting)
+}
+
+================
+File: src/css/admin.css
+================
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  background: url('../assets/eth5.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.container {
+  width: 1100px;
+  height: 150px;
+  max-width: 1100px;
+  background-color: rgba(0, 0, 0, 0.65);
+  padding: 40px;
+  border-radius: 5px;
+  box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 32px;
+  color: #ffffff;
+  margin-bottom: 30px;
+}
+
+legend {
+  font-size: 24px;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.table {
+  width: 80%;
+  margin-bottom: 20px;
+  background-color: rgba(255, 255, 255, 0.650);
+  border-radius: 5px;
+}
+
+th {
+  font-size: 18px;
+  color: #000000;
+}
+
+td {
+  font-size: 16px;
+  color: #000000;
+}
+
+input[type="text"],
+input[type="date"] {
+  width: 90%;
+  padding: 12px;
+  border: 50px;
+  border-radius: 5px;
+  font-size: 18px;
+  color: #000000;
+  background-color: rgb(255, 255, 255);
+}
+
+input[type="submit"] {
+  width: 30%;
+  padding: 12px;
+  background-color: #198a7b;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  font-size: 19px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+  background-color: #44afa1;
+}
+
+input[type="submit"]:focus {
+  outline: none;
+}
+
+input[type="submit"]:active {
+  transform: translateY(2px);
+}
+
+#Aday {
+  font-size: 18px;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: 90%;
+  }
+}
+.container {
+  /* ... */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.table {
+  width: 80%;
+  margin: 0 auto; /* Add this line to center the table horizontally */
+  margin-bottom: 20px;
+  background-color: rgba(255, 255, 255, 0.650);
+  border-radius: 5px;
+}
+
+================
+File: src/css/index.css
+================
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    background: url('../assets/eth5.jpg') no-repeat center center fixed;
+    background-size: cover;
+  }
+  
+  .container {
+    width: 750px;
+    max-width: 900px;
+    background-color: rgba(0, 0, 0, 0.650);
+    padding: 40px;
+    padding-bottom: 2%;
+    padding-top: 2%;
+    border-radius: 5px;
+    box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
+    text-align: center;
+  }
+  
+  h1 {
+    font-size: 32px;
+    color: #ffffff;
+    margin-bottom: 30px;
+  }
+
+  h2 {
+    font-size: 25px;
+    color: #ffffff;
+    margin-bottom: 25px;
+  }
+  
+  h3 {
+    color: #ffffff;
+  }
+
+  p {
+    color: #ffffff;
+  }
+  
+  .table {
+    width: 100%;
+    margin-bottom: 20px;
+    background-color: rgba(124, 123, 123, 0.65);
+    border-radius: 5px;
+    border-collapse: separate;
+    border-spacing: 25px;
+  }
+  
+  th {
+    font-size: 18px;
+    color: #ffffff;
+  }
+  
+  td {
+    font-size: 16px;
+    color: #ffffff;
+    row-gap: 100%;
+  }
+  
+  #voteButton {
+    width: 40%;
+    padding: 12px;
+    background-color: #198a7b;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 19px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  #voteButton:hover {
+    background-color: #44afa1;
+  }
+  
+  #voteButton:focus {
+    outline: none;
+  }
+  
+  #voteButton:active {
+    transform: translateY(2px);
+  }
+  
+  #accountAddress {
+    font-size: 18px;
+    color: #ffffff;
+    margin-top: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    .container {
+      width: 90%;
+    }
+  }
+
+================
+File: src/css/login.css
+================
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 90vh;
+    background: url('../assets/eth5.jpg') no-repeat center center fixed;
+    background-size: cover;
+  }
+  
+  .container {
+    width: 450px;
+    max-width: 500px;
+    background-color: rgba(0, 0, 0, 0.650);
+    padding: 40px;
+    border-radius: 5px;
+    box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
+    text-align: center;
+  }
+  
+  h1 {
+    font-size: 32px;
+    color: #ffffff;
+    margin-bottom: 30px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  label {
+    display: block;
+    font-size: 14px;
+    color: #ffffff;
+    text-align: left;
+    margin-bottom: 5px;
+  }
+  
+  input {
+    width: 95%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    color: #000000;
+    background-color: rgb(255, 255, 255); 
+  }
+  
+  button {
+    width: 100%;
+    padding: 12px;
+    background-color: #198a7b;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 19px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #44afa1;
+  }
+  
+  button:focus {
+    outline: none;
+  }
+  
+  button:active {
+    transform: translateY(2px);
+  }
+  
+  @media (max-width: 768px) {
+    .container {
+      width: 90%;
+    }
+  }
+  button {
+    width: 50%; 
+    padding: 10px; 
+    background-color: #198a7b;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 19px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 0 auto; 
+  }
+
+================
+File: src/html/admin.html
+================
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trang Quản Trị</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+      :root {
+        --primary-color: #2a5298;
+        --secondary-color: #198a7b;
+        --accent-color: #4d8dff;
+        --dark-bg: #1a1a2e;
+        --medium-bg: #16213e;
+        --light-bg: #0f3460;
+        --text-light: #e1e1e6;
+        --text-dim: #b8b8c3;
+        --glow: 0 0 10px rgba(77, 141, 255, 0.6);
+        --success-color: #4CAF50;
+        --warning-color: #ff9800;
+        --error-color: #f44336;
+      }
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Montserrat', sans-serif;
+        background: var(--dark-bg);
+        color: var(--text-light);
+        margin: 0;
+        padding: 0;
+        background-image: linear-gradient(135deg, var(--dark-bg) 0%, var(--medium-bg) 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+      }
+      
+      .text-center {
+        text-align: center;
+      }
+      
+      /* Header */
+      .header {
+        background: var(--medium-bg);
+        padding: 20px 0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+      }
+      
+      .header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(77, 141, 255, 0.1) 0%, rgba(26, 26, 46, 0) 70%);
+        z-index: 0;
+      }
+      
+      .header h1 {
+        font-weight: 600;
+        margin: 0;
+        padding: 10px;
+        background: linear-gradient(90deg, #ffffff, #4d8dff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        position: relative;
+        z-index: 1;
+        font-size: 2.2rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      /* Sidebar */
+      .admin-container {
+        display: flex;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      
+      .sidebar {
+        width: 280px;
+        background: var(--medium-bg);
+        border-radius: 10px;
+        padding: 25px;
+        margin-right: 30px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(77, 141, 255, 0.1);
+        position: sticky;
+        top: 30px;
+        height: calc(100vh - 150px);
+        overflow-y: auto;
+      }
+      
+      .sidebar-header {
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .sidebar-title {
+        font-size: 1.2rem;
+        color: var(--accent-color);
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+      
+      .account-info {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        border-radius: 8px;
+        font-family: monospace;
+        word-break: break-all;
+        font-size: 0.85rem;
+        border-left: 3px solid var(--accent-color);
+      }
+      
+      .nav-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      
+      .nav-item {
+        margin-bottom: 10px;
+      }
+      
+      .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        border-radius: 8px;
+        color: var(--text-light);
+        text-decoration: none;
+        transition: all 0.3s;
+        font-weight: 500;
+      }
+      
+      .nav-link:hover, .nav-link.active {
+        background: rgba(77, 141, 255, 0.1);
+        color: var(--accent-color);
+      }
+      
+      .nav-link i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+        color: var(--accent-color);
+        width: 24px;
+        text-align: center;
+      }
+      
+      .btn-account {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .btn-account i {
+        margin-right: 8px;
+      }
+      
+      .btn-account:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(25, 138, 123, 0.3);
+      }
+      
+      /* Main Content */
+      .main-content {
+        flex: 1;
+      }
+      
+      .card {
+        background: var(--medium-bg);
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(77, 141, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+      }
+      
+      .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(77, 141, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+      }
+      
+      .card-icon i {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+      }
+      
+      .card-title {
+        color: var(--accent-color);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+      
+      .form-group {
+        margin-bottom: 20px;
+      }
+      
+      .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -10px;
+      }
+      
+      .form-col {
+        flex: 1;
+        padding: 0 10px;
+        min-width: 200px;
+      }
+      
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        color: var(--text-dim);
+        font-weight: 500;
+      }
+      
+      .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-light);
+        font-size: 1rem;
+        transition: all 0.3s;
+        font-family: 'Montserrat', sans-serif;
+      }
+      
+      .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: var(--glow);
+      }
+      
+      .btn {
+        padding: 12px 25px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .btn i {
+        margin-right: 8px;
+      }
+      
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(25, 138, 123, 0.3);
+      }
+      
+      .btn-block {
+        width: 100%;
+      }
+      
+      /* Status Messages */
+      .status-message {
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+      }
+      
+      /* Đảm bảo hiển thị đúng phần tử #Aday */
+      #Aday {
+        margin-top: 15px;
+        padding: 15px;
+        border-radius: 8px;
+        font-weight: 500;
+        text-align: center;
+        width: 100%;
+      }
+      
+      #Aday p {
+        margin: 0;
+        padding: 0;
+      }
+      
+      #Aday.visible {
+        display: block !important;
+      }
+      
+      .status-message i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+      }
+      
+      .status-success {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
+        border-left: 3px solid var(--success-color);
+      }
+      
+      .status-warning {
+        background: rgba(255, 152, 0, 0.1);
+        color: var(--warning-color);
+        border-left: 3px solid var(--warning-color);
+      }
+      
+      .status-error {
+        background: rgba(244, 67, 54, 0.1);
+        color: var(--error-color);
+        border-left: 3px solid var(--error-color);
+      }
+      
+      /* Stats Cards */
+      .stats-container {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -10px 30px;
+      }
+      
+      .stat-card {
+        flex: 1;
+        min-width: 200px;
+        background: var(--medium-bg);
+        border-radius: 10px;
+        padding: 20px;
+        margin: 0 10px 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(77, 141, 255, 0.1);
+        display: flex;
+        align-items: center;
+      }
+      
+      .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: rgba(77, 141, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+      }
+      
+      .stat-icon i {
+        font-size: 1.8rem;
+        color: var(--accent-color);
+      }
+      
+      .stat-info {
+        flex: 1;
+      }
+      
+      .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+      
+      .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-dim);
+      }
+      
+      /* Responsive */
+      @media (max-width: 992px) {
+        .admin-container {
+          flex-direction: column;
+        }
+        
+        .sidebar {
+          width: 100%;
+          margin-right: 0;
+          margin-bottom: 30px;
+          height: auto;
+          position: static;
+        }
+        
+        .nav-menu {
+          display: flex;
+          flex-wrap: wrap;
+        }
+        
+        .nav-item {
+          margin-right: 10px;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        .form-row {
+          flex-direction: column;
+        }
+        
+        .form-col {
+          margin-bottom: 15px;
+        }
+        
+        .stats-container {
+          flex-direction: column;
+        }
+        
+        .stat-card {
+          width: calc(100% - 20px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header text-center">
+      <h1>Hệ Thống Bỏ Phiếu Phi Tập Trung Trên Blockchain Ethereum</h1>
+    </div>
+
+    <div class="admin-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">Thông Tin Tài Khoản</div>
+          <div class="account-info" id="accountAddress"></div>
+          <button id="switchAccount" class="btn-account">
+            <i class="fas fa-exchange-alt"></i> Chọn Lại Tài Khoản
+          </button>
+        </div>
+        
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="#" class="nav-link active" data-section="dashboard">
+              <i class="fas fa-tachometer-alt"></i> Tổng Quan
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="candidates">
+              <i class="fas fa-user-tie"></i> Quản Lý Ứng Cử Viên
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="voting-dates">
+              <i class="fas fa-calendar-alt"></i> Thiết Lập Thời Gian
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="results">
+              <i class="fas fa-chart-bar"></i> Kết Quả Bỏ Phiếu
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="index.html" class="nav-link">
+              <i class="fas fa-vote-yea"></i> Trang Bỏ Phiếu
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Dashboard Section -->
+        <div class="content-section" id="dashboard-section">
+          <div class="stats-container">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="totalCandidates">0</div>
+                <div class="stat-label">Tổng Số Ứng Cử Viên</div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-vote-yea"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="totalVotes">0</div>
+                <div class="stat-label">Tổng Số Phiếu Bầu</div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="votingStatus">Chưa Bắt Đầu</div>
+                <div class="stat-label">Trạng Thái Bỏ Phiếu</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-info-circle"></i>
+              </div>
+              <h2 class="card-title">Thông Tin Cuộc Bỏ Phiếu</h2>
+            </div>
+            
+            <div class="voting-info">
+              <p><strong>Thời Gian Bỏ Phiếu:</strong> <span id="votingDates">Chưa thiết lập</span></p>
+              <p><strong>Địa Chỉ Hợp Đồng:</strong> <span id="contractAddress">Đang tải...</span></p>
+              <p><strong>Trạng Thái Hiện Tại:</strong> <span id="currentStatus">Đang tải...</span></p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Candidates Section -->
+        <div class="content-section" id="candidates-section" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-user-plus"></i>
+              </div>
+              <h2 class="card-title">Thêm Ứng Cử Viên</h2>
+            </div>
+            
+            <form id="addCandidateForm">
+              <div class="form-row">
+                <div class="form-col">
+                  <div class="form-group">
+                    <label class="form-label" for="name">Họ và tên</label>
+                    <input id="name" type="text" class="form-control" name="name" placeholder="Nhập tên ứng cử viên" autocomplete="off">
+                  </div>
+                </div>
+                
+                <div class="form-col">
+                  <div class="form-group">
+                    <label class="form-label" for="party">Đảng phái</label>
+                    <input id="party" type="text" class="form-control" name="party" placeholder="Nhập đảng phái ứng cử viên">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="text-center">
+                <button type="button" id="addCandidate" class="btn">
+                  <i class="fas fa-plus-circle"></i> Thêm Ứng Cử Viên
+                </button>
+              </div>
+              
+              <div id="Aday" class="status-message" style="display: none;"></div>
+            </form>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-list"></i>
+              </div>
+              <h2 class="card-title">Danh Sách Ứng Cử Viên</h2>
+            </div>
+            
+            <div class="candidate-list" id="candidateList">
+              <p class="text-center">Đang tải danh sách ứng cử viên...</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Voting Dates Section -->
+        <div class="content-section" id="voting-dates-section" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-calendar-alt"></i>
+              </div>
+              <h2 class="card-title">Thiết Lập Thời Gian Bỏ Phiếu</h2>
+            </div>
+            
+            <form id="setDatesForm">
+              <div class="form-row">
+                <div class="form-col">
+                  <div class="form-group">
+                    <label class="form-label" for="startDate">Ngày bắt đầu</label>
+                    <input id="startDate" type="date" class="form-control" name="startDate">
+                  </div>
+                </div>
+                
+                <div class="form-col">
+                  <div class="form-group">
+                    <label class="form-label" for="endDate">Ngày kết thúc</label>
+                    <input id="endDate" type="date" class="form-control" name="endDate">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="text-center">
+                <button type="button" id="addDate" class="btn">
+                  <i class="fas fa-save"></i> Thiết Lập Thời Gian
+                </button>
+              </div>
+              
+              <div id="dates" class="status-message" style="display: none;"></div>
+            </form>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-info-circle"></i>
+              </div>
+              <h2 class="card-title">Thông Tin Thời Gian Hiện Tại</h2>
+            </div>
+            
+            <div class="current-dates">
+              <p><strong>Thời Gian Bỏ Phiếu Hiện Tại:</strong> <span id="currentDates">Chưa thiết lập</span></p>
+              <p><strong>Trạng Thái:</strong> <span id="datesStatus">Chưa thiết lập</span></p>
+            </div>
+          </div>
+    </div>
+
+        <!-- Results Section -->
+        <div class="content-section" id="results-section" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-chart-bar"></i>
+              </div>
+              <h2 class="card-title">Kết Quả Bỏ Phiếu</h2>
+            </div>
+
+            <div class="results-container" id="resultsContainer">
+              <p class="text-center">Đang tải kết quả bỏ phiếu...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+  <script src="../dist/app.bundle.js" type="module"></script>
+    <script>
+      // Navigation
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (this.getAttribute('href') === '#') {
+            e.preventDefault();
+            
+            // Remove active class from all links
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            
+            // Add active class to clicked link
+            this.classList.add('active');
+            
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+              section.style.display = 'none';
+            });
+            
+            // Show selected section
+            const sectionId = this.getAttribute('data-section') + '-section';
+            document.getElementById(sectionId).style.display = 'block';
+          }
+        });
+      });
+      
+      // Format status messages
+      function showStatusMessage(elementId, message, type) {
+        const element = document.getElementById(elementId);
+        element.className = 'status-message';
+        element.classList.add('status-' + type);
+        
+        let icon = '';
+        switch(type) {
+          case 'success':
+            icon = '<i class="fas fa-check-circle"></i>';
+            break;
+          case 'warning':
+            icon = '<i class="fas fa-exclamation-triangle"></i>';
+            break;
+          case 'error':
+            icon = '<i class="fas fa-times-circle"></i>';
+            break;
+        }
+        
+        element.innerHTML = icon + message;
+        element.style.display = 'flex';
+      }
+    </script>
+  </body>
+</html>
+
+================
+File: src/html/index.html
+================
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trang Bỏ Phiếu</title>
+
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary-color: #2a5298;
+        --secondary-color: #198a7b;
+        --accent-color: #4d8dff;
+        --dark-bg: #1a1a2e;
+        --medium-bg: #16213e;
+        --light-bg: #0f3460;
+        --text-light: #e1e1e6;
+        --text-dim: #b8b8c3;
+        --glow: 0 0 10px rgba(77, 141, 255, 0.6);
+      }
+      
+      body {
+        font-family: 'Montserrat', sans-serif;
+        background: var(--dark-bg);
+        color: var(--text-light);
+        margin: 0;
+        padding: 0;
+        background-image: linear-gradient(135deg, var(--dark-bg) 0%, var(--medium-bg) 100%);
+        background-attachment: fixed;
+      }
+      
+      .text-center {
+        text-align: center;
+      }
+      
+      #head {
+        background: var(--medium-bg);
+        padding: 20px 0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+      }
+      
+      #head::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(77, 141, 255, 0.1) 0%, rgba(26, 26, 46, 0) 70%);
+        z-index: 0;
+      }
+      
+      #head h1 {
+        font-weight: 600;
+        margin: 0;
+        padding: 10px;
+        background: linear-gradient(90deg, #ffffff, #4d8dff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        position: relative;
+        z-index: 1;
+        font-size: 2.2rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      #head h2 {
+        color: var(--text-light);
+        font-weight: 500;
+        margin: 15px 0;
+        font-size: 1.6rem;
+      }
+      
+      #head h3 {
+        color: var(--accent-color);
+        font-weight: normal;
+        font-size: 1.2rem;
+      }
+      
+      .container {
+        background: var(--medium-bg);
+        border-radius: 10px;
+        padding: 25px;
+        margin: 20px auto;
+        max-width: 900px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(77, 141, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+      }
+      
+      .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 20px 0;
+      }
+      
+      .table thead tr {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      
+      .table th {
+        color: var(--accent-color);
+        font-weight: 600;
+        padding: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 2px solid rgba(77, 141, 255, 0.2);
+        font-size: 0.9rem;
+      }
+      
+      .table td {
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s;
+      }
+      
+      .table tbody tr:hover td {
+        background: rgba(77, 141, 255, 0.05);
+      }
+      
+      input[type="radio"] {
+        accent-color: var(--accent-color);
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        vertical-align: middle;
+        cursor: pointer;
+      }
+      
+      #vote {
+        margin-top: 30px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        border-left: 3px solid var(--accent-color);
+      }
+      
+      #vote p {
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+      }
+      
+      .btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 1.1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 5px 15px rgba(25, 138, 123, 0.3);
+      }
+      
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(25, 138, 123, 0.5);
+      }
+      
+      .btn:disabled {
+        background: #555;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        opacity: 0.7;
+      }
+      
+      #msg {
+        margin-top: 15px;
+        padding: 10px;
+        font-weight: 500;
+        color: var(--accent-color);
+        font-size: 1.1rem;
+      }
+      
+      #accountAddress {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        border-radius: 5px;
+        font-family: monospace;
+        margin: 30px auto;
+        max-width: 900px;
+        word-break: break-all;
+        border-left: 3px solid var(--accent-color);
+      }
+      
+      /* Hiệu ứng cho các thẻ */
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(77, 141, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0); }
+      }
+      
+      .btn-primary {
+        animation: pulse 2s infinite;
+      }
+      
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+          margin: 15px;
+        }
+        
+        .table th, .table td {
+          padding: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="head" class="text-center">
+      <h1 align="center">Hệ Thống Bỏ Phiếu Phi Tập Trung Trên Blockchain Ethereum</h1>
+      <h2 align="center">Chào Mừng Đến Trang Bỏ Phiếu</h2> 
+      <h3 align="center">Thời Gian Bỏ Phiếu: <span id="dates"></span></h3>
+    </div>
+    
+    <div id="account" class="container">
+      <p id="accountAddress" class="text-center"></p>
+      <div class="text-center">
+        <button id="switchAccount" class="btn">Chọn Lại Tài Khoản Metamask</button>
+      </div>
+    </div>
+    
+    <div id="candidate" class="container"> 
+      <table class="table text-center">
+        <thead>
+          <tr>
+            <th>Tên Ứng Cử Viên</th>
+            <th>Đảng Phái</th>
+            <th>Tổng Số Phiếu</th>
+          </tr>
+        </thead>
+        <tbody id="boxCandidate"></tbody>
+      </table>
+      
+      <div id="vote">
+        <p>Vui lòng chọn một ứng cử viên và nhấn nút bỏ phiếu.</p>
+        <button id="voteButton" class="btn btn-primary" onclick="App.vote()" disabled>Bỏ Phiếu</button>
+        <div id="msg"></div>
+        <div id="vote-box"></div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="../dist/app.bundle.js" type="module"></script>
+  </body>
+</html>
+
+================
+File: src/html/login.html
+================
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng Nhập - Hệ Thống Bỏ Phiếu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #2a5298;
+      --secondary-color: #198a7b;
+      --accent-color: #4d8dff;
+      --dark-bg: #1a1a2e;
+      --medium-bg: #16213e;
+      --light-bg: #0f3460;
+      --text-light: #e1e1e6;
+      --text-dim: #b8b8c3;
+      --glow: 0 0 10px rgba(77, 141, 255, 0.6);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-image: linear-gradient(135deg, var(--dark-bg) 0%, var(--medium-bg) 100%);
+      background-attachment: fixed;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Hiệu ứng nền */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 50%, rgba(77, 141, 255, 0.1) 0%, rgba(26, 26, 46, 0) 70%);
+      z-index: -1;
+    }
+    
+    /* Hiệu ứng lưới */
+    body::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(77, 141, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(77, 141, 255, 0.05) 1px, transparent 1px);
+      background-size: 30px 30px;
+      z-index: -1;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #ffffff, #4d8dff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .login-container {
+      width: 400px;
+      padding: 40px;
+      background: var(--medium-bg);
+      border-radius: 15px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(77, 141, 255, 0.1);
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    /* Hiệu ứng viền sáng */
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+    }
+    
+    .login-title {
+      font-size: 1.8rem;
+      color: var(--accent-color);
+      margin-bottom: 30px;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+      position: relative;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    .input-group {
+      position: relative;
+    }
+    
+    .input-group i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent-color);
+      font-size: 1.2rem;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 15px 15px 15px 45px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: all 0.3s;
+      font-family: 'Montserrat', sans-serif;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: var(--glow);
+    }
+    
+    .btn-login {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 5px 15px rgba(25, 138, 123, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-login::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: all 0.6s;
+    }
+    
+    .btn-login:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(25, 138, 123, 0.5);
+    }
+    
+    .btn-login:hover::before {
+      left: 100%;
+    }
+    
+    /* Hiệu ứng animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(77, 141, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0); }
+    }
+    
+    .error-message {
+      color: #ff5c5c;
+      font-size: 0.9rem;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    /* Responsive */
+    @media (max-width: 480px) {
+      .login-container {
+        width: 90%;
+        padding: 30px;
+      }
+      
+      .header h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Hệ Thống Bỏ Phiếu Phi Tập Trung</h1>
+  </div>
+  
+  <div class="login-container">
+    <h2 class="login-title">Đăng Nhập</h2>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="voter-id">Mã Cử Tri</label>
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" class="form-control" id="voter-id" name="voter-id" placeholder="Nhập mã cử tri của bạn">
+        </div>
+        <div class="error-message" id="voter-id-error">Vui lòng nhập mã cử tri</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Mật Khẩu</label>
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input type="password" class="form-control" id="password" name="password" placeholder="Nhập mật khẩu của bạn">
+        </div>
+        <div class="error-message" id="password-error">Vui lòng nhập mật khẩu</div>
+      </div>
+      
+      <button type="submit" class="btn-login">Đăng Nhập</button>
+      <div class="error-message" id="login-error" style="text-align: center; margin-top: 15px;">Đăng nhập không thành công</div>
+    </form>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+  <script src="../js/login.js" type="module"></script>
+</body>
+
+</html>
+
+================
+File: src/js/app.js
+================
+//import "../css/style.css"
+
+const Web3 = require('web3');
+const contract = require('@truffle/contract');
+
+const votingArtifacts = require('../../build/contracts/Voting.json');
+var VotingContract = contract(votingArtifacts);
+
+
+window.App = {
+  // Thêm phương thức để cập nhật hiển thị tài khoản
+  updateAccountDisplay: function() {
+    if (window.ethereum && window.ethereum.selectedAddress) {
+      console.log("Đang cập nhật hiển thị tài khoản:", window.ethereum.selectedAddress);
+      $("#accountAddress").html("Tài Khoản Hiện Tại: " + window.ethereum.selectedAddress);
+      App.account = window.ethereum.selectedAddress;
+      console.log("App.account đã được cập nhật:", App.account);
+    } else {
+      console.log("Không có tài khoản được chọn để hiển thị");
+      $("#accountAddress").html("Chưa kết nối tài khoản Metamask");
+      App.account = null;
+    }
+  },
+
+  // Thêm phương thức để kết nối lại và chọn tài khoản
+  connectMetamask: function(forceChooseAccount) {
+    console.log("connectMetamask được gọi với forceChooseAccount =", forceChooseAccount);
+    $('#Aday').html("<p style='color: white;'>Đang kết nối Metamask, vui lòng đợi...</p>");
+    $('#Aday').show();
+    
+    if (window.ethereum) {
+      console.log("Metamask đã được cài đặt, đang kết nối...");
+      
+      // Nếu yêu cầu chọn lại tài khoản, sử dụng wallet_requestPermissions thay vì eth_requestAccounts
+      const connectMethod = forceChooseAccount 
+        ? { method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] }
+        : { method: 'eth_requestAccounts' };
+      
+      console.log("Đang yêu cầu kết nối với phương thức:", connectMethod.method);
+      
+      window.ethereum.request(connectMethod)
+        .then(function(result) {
+          console.log("Kết quả kết nối:", result);
+          // Sau khi có quyền, lấy tài khoản
+          return window.ethereum.request({ method: 'eth_requestAccounts' });
+        })
+        .then(function(accounts) {
+          if (accounts.length > 0) {
+            console.log("Đã kết nối Metamask với tài khoản:", accounts[0]);
+            $('#Aday').html("<p style='color: white;'>Đã kết nối Metamask: " + accounts[0] + "</p>");
+            
+            // Thêm nút để chọn lại tài khoản
+            $('#Aday').append("<button id='changeAccount' class='btn btn-secondary mt-2' style='background-color: #198a7b; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-top: 10px;'>Đổi tài khoản</button>");
+            
+            $('#changeAccount').click(function() {
+              App.connectMetamask(true);
+            });
+            
+            // Kiểm tra mạng hiện tại
+            window.ethereum.request({ method: 'eth_chainId' })
+              .then(function(chainId) {
+                console.log("Mạng blockchain hiện tại: " + chainId);
+                
+                // Kiểm tra xem đang ở mạng nào
+                let networkName = '';
+                switch(chainId) {
+                  case '0x1': networkName = 'Ethereum Mainnet'; break;
+                  case '0x3': networkName = 'Ropsten Testnet'; break;
+                  case '0x4': networkName = 'Rinkeby Testnet'; break;
+                  case '0x5': networkName = 'Goerli Testnet'; break;
+                  case '0xaa36a7': networkName = 'Sepolia Testnet'; break;
+                  case '0x539': networkName = 'Ganache Local (1337)'; break;
+                  default: networkName = 'Mạng khác (chainId: ' + chainId + ')'; break;
+                }
+                
+                console.log("Đang kết nối với mạng: " + networkName);
+                $('#Aday').append("<p style='color: white;'>Đang kết nối với mạng: " + networkName + "</p>");
+                
+                // Thiết lập Web3 provider
+                VotingContract.setProvider(window.ethereum);
+                
+                // Đặt giá trị gas mặc định cao hơn
+                VotingContract.defaults({
+                  from: accounts[0], 
+                  gas: 3000000,  // Tăng gas lên 3,000,000
+                  gasPrice: window.eth.utils.toWei('50', 'gwei')  // Đặt giá gas rõ ràng
+                });
+
+                // Load account data
+                App.account = accounts[0];
+                $("#accountAddress").html("Tài Khoản Hiện Tại: " + accounts[0]);
+                
+                // Gọi hàm cập nhật hiển thị tài khoản
+                App.updateAccountDisplay();
+                
+                // Tiếp tục khởi tạo contract và các chức năng
+                App.initContract();
+              })
+              .catch(function(err) {
+                console.error("Lỗi khi lấy thông tin mạng:", err);
+                $('#Aday').html("<p style='color: red;'>Lỗi khi lấy thông tin mạng blockchain: " + err.message + "</p>");
+                $('#Aday').show();
+              });
+          } else {
+            console.error("Không tìm thấy tài khoản, vui lòng đăng nhập vào Metamask");
+            $('#Aday').html("<p style='color: red;'>Không tìm thấy tài khoản, vui lòng đăng nhập vào Metamask</p>");
+            alert("Vui lòng đăng nhập vào Metamask để sử dụng ứng dụng");
+          }
+        })
+        .catch(function(error) {
+          console.error("Lỗi khi kết nối Metamask:", error);
+          $('#Aday').html("<p style='color: red;'>Lỗi khi kết nối Metamask: " + error.message + "</p>");
+          alert("Lỗi khi kết nối Metamask: " + error.message);
+        });
+    } else {
+      console.error("Metamask chưa được cài đặt");
+      $('#Aday').html("<p style='color: red;'>Metamask chưa được cài đặt</p>");
+      alert("Vui lòng cài đặt Metamask để sử dụng ứng dụng");
+    }
+  },
+  
+  eventStart: function() { 
+    // Gọi phương thức kết nối Metamask
+    App.connectMetamask(false);
+  },
+
+  initContract: function() {
+    $('#Aday').html("<p style='color: white;'>Đang khởi tạo hợp đồng, vui lòng đợi...</p>");
+    $('#Aday').show();
+    
+    try {
+      // Kiểm tra và ghi log mạng hiện tại
+      window.ethereum.request({ method: 'net_version' })
+        .then(function(networkId) {
+          console.log("Đang kết nối đến mạng với ID:", networkId);
+          
+          // Hiển thị thông tin mạng
+          let networkInfo = "Mạng đang kết nối: ";
+          switch(networkId) {
+            case '1': networkInfo += "Ethereum Mainnet"; break;
+            case '3': networkInfo += "Ropsten Testnet"; break;
+            case '4': networkInfo += "Rinkeby Testnet"; break;
+            case '5': networkInfo += "Goerli Testnet"; break;
+            case '42': networkInfo += "Kovan Testnet"; break;
+            case '5777': networkInfo += "Ganache Local (5777)"; break;
+            case '1337': networkInfo += "Ganache Local (1337)"; break;
+            default: networkInfo += "ID: " + networkId; break;
+          }
+          
+          $('#Aday').html("<p style='color: white;'>" + networkInfo + "</p>");
+          
+          // Kiểm tra xem có địa chỉ contract cho network này không
+          const deployedNetworks = Object.keys(votingArtifacts.networks);
+          console.log("Mạng đã triển khai hợp đồng:", deployedNetworks);
+          
+          if (!deployedNetworks.includes(networkId)) {
+            $('#Aday').html("<p style='color: red;'>Lỗi: Hợp đồng chưa được triển khai trên mạng hiện tại (ID: " + networkId + ").<br>Các mạng đã triển khai: " + deployedNetworks.join(", ") + "<br>Vui lòng chuyển sang một trong các mạng trên hoặc triển khai hợp đồng lên mạng này.</p>");
+            return;
+          }
+          
+          // Đặt provider cho contract và thêm tùy chọn gas cao hơn
+          VotingContract.setProvider(window.ethereum);
+          
+          // Cấu hình gas cao hơn để tránh lỗi Out of Gas
+          VotingContract.defaults({
+            from: App.account,
+            gas: 5000000,  // Tăng gas lên cao hơn
+            gasPrice: window.eth.utils.toWei('50', 'gwei')
+          });
+          
+          // Kiểm tra xem hợp đồng có tồn tại không và thử kết nối
+          VotingContract.deployed()
+            .then(function(instance) {
+              console.log("Đã kết nối với hợp đồng tại địa chỉ:", instance.address);
+              $('#Aday').html("<p style='color: white;'>Đã kết nối với hợp đồng tại địa chỉ: " + instance.address + "</p>");
+              $('#Aday').show();
+              
+              // Thử gọi một phương thức đơn giản để kiểm tra kết nối
+              return instance.getCountCandidates.call({ from: App.account })
+                .then(function(countCandidates) {
+                  console.log("Số lượng ứng cử viên hiện tại:", countCandidates.toString());
+                  
+                  // Hiển thị giao diện người dùng
+                  $(document).ready(function() {
+                    // Xử lý các sự kiện UI và các chức năng giao diện
+                    // Xử lý nút chọn lại tài khoản
+                    $('#switchAccount').click(function() {
+                      console.log("Đã nhấn nút chọn lại tài khoản (#switchAccount)");
+                      App.connectMetamask(true);
+                    });
+                    
+                    // Tiếp tục các sự kiện khác...
+                    $('#addCandidate').click(function() {
+                      // Code xử lý thêm ứng cử viên...
+                      console.log("Đã nhấn nút thêm ứng cử viên");
+                      
+                      var nameCandidate = $('#name').val();
+                      var partyCandidate = $('#party').val();
+                        
+                      // Debug - kiểm tra giá trị đầu vào
+                      console.log("Tên ứng cử viên:", nameCandidate);
+                      console.log("Đảng phái:", partyCandidate);
+                      console.log("Trạng thái Metamask:", !!window.ethereum);
+                      console.log("Account hiện tại:", App.account);
+                        
+                      // Kiểm tra dữ liệu đầu vào
+                      if (!nameCandidate || !partyCandidate) {
+                        $('#Aday').html("<p style='color: red;'>Vui lòng nhập đầy đủ tên và đảng phái của ứng cử viên</p>");
+                        $('#Aday').show();
+                        return;
+                      }
+                        
+                      // Tiếp tục chức năng thêm ứng cử viên...
+                      App.addCandidate(nameCandidate, partyCandidate);
+                    });
+                    
+                    $('#addDate').click(function() {
+                      // Code xử lý thêm ngày...
+                      var startDate = Date.parse(document.getElementById("startDate").value)/1000;
+                      var endDate = Date.parse(document.getElementById("endDate").value)/1000;
+               
+                      // Debug - kiểm tra giá trị đầu vào
+                      console.log("Ngày bắt đầu:", new Date(startDate*1000));
+                      console.log("Ngày kết thúc:", new Date(endDate*1000));
+                      console.log("Trạng thái Metamask:", !!window.ethereum);
+                      console.log("Account hiện tại:", App.account);
+               
+                      // Kiểm tra dữ liệu đầu vào
+                      if (isNaN(startDate) || isNaN(endDate)) {
+                        $('#Aday').html("<p style='color: red;'>Vui lòng chọn ngày bắt đầu và kết thúc</p>");
+                        $('#Aday').show();
+                        return;
+                      }
+                      
+                      // Tiếp tục chức năng thiết lập ngày...
+                      App.setDates(startDate, endDate);
+                    });
+                  });
+                  
+                  // Lấy thông tin ngày bỏ phiếu
+                  instance.getDates().then(function(result) {
+                    var startDate = new Date(result[0]*1000);
+                    var endDate = new Date(result[1]*1000);
+                    
+                    // Định dạng ngày theo kiểu Việt Nam
+                    var startDateStr = formatVietnameseDate(startDate);
+                    var endDateStr = formatVietnameseDate(endDate);
+                    
+                    $("#dates").text(startDateStr + " - " + endDateStr);
+                  }).catch(function(err) { 
+                    console.error("Lỗi khi lấy thông tin ngày bỏ phiếu:", err);
+                  });
+                  
+                  // Kiểm tra trạng thái bỏ phiếu
+                  instance.checkVote().then(function(voted) {
+                    console.log("Trạng thái đã bỏ phiếu:", voted);
+                    if(!voted) {
+                      $("#voteButton").attr("disabled", false);
+                    } else {
+                      $("#msg").html("<p style='color: var(--accent-color);'>Bạn đã bỏ phiếu rồi.</p>");
+                    }
+                  }).catch(function(error) {
+                    console.error("Lỗi khi kiểm tra trạng thái bỏ phiếu:", error);
+                  });
+                  
+                  // Hiển thị các ứng cử viên
+                  for (var i = 0; i < countCandidates; i++) {
+                    (function(candidateIndex) {
+                      instance.getCandidate(candidateIndex + 1).then(function(data) {
+                        var id = data[0];
+                        var name = data[1];
+                        var party = data[2];
+                        var voteCount = data[3];
+                        var viewCandidates = `<tr><td> <input class="form-check-input" type="radio" name="candidate" value="${id}" id=${id}>` + name + "</td><td>" + party + "</td><td>" + voteCount + "</td></tr>";
+                        $("#boxCandidate").append(viewCandidates);
+                      }).catch(function(error) {
+                        console.error("Lỗi khi lấy thông tin ứng cử viên:", error);
+                      });
+                    })(i);
+                  }
+                  
+                  window.countCandidates = countCandidates;
+                })
+                .catch(function(error) {
+                  console.error("Lỗi khi gọi getCountCandidates:", error);
+                  $('#Aday').html("<p style='color: red;'>Lỗi khi truy vấn dữ liệu từ hợp đồng: " + error.message + "<br>Có thể gây ra bởi:<br>1. Gas không đủ<br>2. ABI không khớp với hợp đồng<br>3. Hợp đồng không tồn tại tại địa chỉ đã chỉ định</p>");
+                  $('#Aday').show();
+                });
+            })
+            .catch(function(error) {
+              console.error("Lỗi kết nối với hợp đồng:", error);
+              $('#Aday').html("<p style='color: red;'>Lỗi khi kết nối với hợp đồng: " + error.message + "<br>Vui lòng kiểm tra lại:<br>1. Địa chỉ hợp đồng trong file build/contracts/Voting.json<br>2. Mạng blockchain bạn đang kết nối<br>3. Metamask đã được cài đặt và mở khóa</p>");
+              $('#Aday').show();
+            });
+        })
+        .catch(function(error) {
+          console.error("Lỗi khi lấy thông tin mạng blockchain:", error);
+          $('#Aday').html("<p style='color: red;'>Lỗi khi lấy thông tin mạng blockchain: " + error.message + "</p>");
+          $('#Aday').show();
+        });
+    } catch(error) {
+      console.error("Lỗi ngoại lệ khi khởi tạo hợp đồng:", error);
+      $('#Aday').html("<p style='color: red;'>Lỗi ngoại lệ khi khởi tạo hợp đồng: " + error.message + "</p>");
+      $('#Aday').show();
+    }
+  },
+
+  vote: function() {    
+    var candidateID = $("input[name='candidate']:checked").val();
+    
+    // Debug - kiểm tra giá trị đầu vào
+    console.log("ID ứng cử viên đã chọn:", candidateID);
+    console.log("Trạng thái Metamask:", !!window.ethereum);
+    console.log("Account hiện tại:", App.account);
+    
+    if (!candidateID) {
+      $("#msg").html("<p style='color: red;'>Vui lòng chọn một ứng cử viên để bỏ phiếu.</p>");
+      return;
+    }
+    
+    // Kiểm tra Metamask
+    if (!window.ethereum) {
+      $("#msg").html("<p style='color: red;'>Không tìm thấy Metamask. Vui lòng cài đặt Metamask để tiếp tục.</p>");
+      return;
+    }
+    
+    // Hiển thị thông báo đang xử lý
+    $("#msg").html("<p style='color: var(--accent-color);'>Đang xử lý, vui lòng chờ và xác nhận trong Metamask...</p>");
+    
+    // Tạo hàm xử lý riêng để tránh lỗi closure và callback lồng nhau
+    function voteProcess() {
+      VotingContract.deployed()
+        .then(function(instance) {
+          console.log("Đã lấy instance hợp đồng:", instance.address);
+          
+          // Gọi hàm vote với gas cao hơn
+          return instance.vote(parseInt(candidateID), {
+            from: App.account,
+            gas: 5000000,  // Tăng gas cao hơn giống các hàm khác
+            gasPrice: window.eth.utils.toWei('50', 'gwei')  // Chỉ định rõ ràng gasPrice
+          });
+        })
+        .then(function(result) {
+          console.log("Kết quả bỏ phiếu thành công:", result);
+          $("#voteButton").attr("disabled", true);
+          $("#msg").html("<p style='color: var(--accent-color);'>Đã bỏ phiếu thành công! Đang làm mới trang...</p>");
+          
+          // Làm mới trang sau 2 giây
+          setTimeout(function() {
+            window.location.reload();
+          }, 2000);
+        })
+        .catch(function(err) {
+          console.error("Lỗi khi bỏ phiếu:", err);
+          let errorMessage = "Lỗi không xác định: " + err.message;
+          
+          if (err.message.includes("gas")) {
+            errorMessage = "Không đủ gas để thực hiện giao dịch. Vui lòng tăng giới hạn gas.";
+          } else if (err.message.includes("rejected")) {
+            errorMessage = "Giao dịch đã bị từ chối trên Metamask. Vui lòng thử lại.";
+          } else if (err.message.includes("account")) {
+            errorMessage = "Vấn đề về tài khoản Metamask. Vui lòng kiểm tra lại tài khoản đã được mở khóa.";
+          } else if (err.message.includes("already voted")) {
+            errorMessage = "Tài khoản này đã bỏ phiếu rồi.";
+          } else if (err.message.includes("Returned values")) {
+            errorMessage = "Lỗi khi truy vấn dữ liệu từ hợp đồng. Vui lòng kiểm tra lại kết nối mạng và cài đặt Metamask.";
+          }
+          
+          $("#msg").html("<p style='color: red;'>Lỗi: " + errorMessage + "</p>");
+        });
+    }
+    
+    // Đảm bảo có kết nối tài khoản Metamask trước khi thực hiện
+    window.ethereum.request({ method: 'eth_requestAccounts' })
+      .then(function(accounts) {
+        if (accounts && accounts.length > 0) {
+          App.account = accounts[0];
+          console.log("Tài khoản Metamask đã chọn:", App.account);
+          voteProcess();
+        } else {
+          $("#msg").html("<p style='color: red;'>Không tìm thấy tài khoản Metamask. Vui lòng mở khóa ví Metamask.</p>");
+        }
+      })
+      .catch(function(err) {
+        console.error("Lỗi khi yêu cầu tài khoản Metamask:", err);
+        $("#msg").html("<p style='color: red;'>Lỗi khi kết nối Metamask: " + err.message + "</p>");
+      });
+  },
+
+  // Thêm phương thức để xử lý việc thêm ứng cử viên
+  addCandidate: function(nameCandidate, partyCandidate) {
+    // Kiểm tra Metamask
+    if (!window.ethereum) {
+      $('#Aday').html("<p style='color: red;'>Không tìm thấy Metamask. Vui lòng cài đặt Metamask để tiếp tục.</p>");
+      $('#Aday').show();
+      return;
+    }
+    
+    // Hiển thị trạng thái
+    $('#Aday').html("<p style='color: white;'>Đang xử lý, vui lòng chờ và xác nhận trong Metamask...</p>");
+    $('#Aday').show();
+    
+    // Đảm bảo có kết nối tài khoản Metamask trước khi thực hiện
+    window.ethereum.request({ method: 'eth_requestAccounts' })
+      .then(function(accounts) {
+        if (accounts && accounts.length > 0) {
+          App.account = accounts[0];
+          console.log("Tài khoản Metamask đã chọn:", App.account);
+          
+          // Lấy instance hợp đồng
+          VotingContract.deployed()
+            .then(function(instance) {
+              console.log("Đã lấy instance hợp đồng:", instance.address);
+              
+              // Ghi log trạng thái hiện tại để debug
+              console.log("Thông tin giao dịch:");
+              console.log("- Địa chỉ gửi (from):", App.account);
+              console.log("- Dữ liệu gửi:", {name: nameCandidate, party: partyCandidate});
+              console.log("- Gas cấu hình:", VotingContract.defaults().gas);
+              
+              // Hiển thị thông báo gửi giao dịch
+              $('#Aday').html("<p style='color: white;'>Đang gửi giao dịch đến blockchain, vui lòng xác nhận trong Metamask và đợi...</p>");
+              $('#Aday').show();
+              
+              // Gọi hàm addCandidate với gas cao hơn và chỉ định rõ ràng gasPrice
+              return instance.addCandidate(nameCandidate, partyCandidate, {
+                from: App.account,
+                gas: 5000000,  // Tăng gas cao hơn
+                gasPrice: window.eth.utils.toWei('50', 'gwei')  // Chỉ định rõ ràng gasPrice
+              });
+            })
+            .then(function(result) {
+              console.log("Kết quả thêm ứng cử viên thành công:", result);
+              $('#Aday').html("<p style='color: white;'>Đã thêm ứng cử viên thành công! Đang làm mới trang...</p>");
+              $('#Aday').show();
+              
+              // Làm mới trang sau 2 giây
+              setTimeout(function() {
+                window.location.reload();
+              }, 2000);
+            })
+            .catch(function(err) {
+              console.error("Lỗi khi thêm ứng cử viên:", err);
+              let errorMessage = "Lỗi không xác định: " + err.message;
+              
+              if (err.message.includes("gas")) {
+                errorMessage = "Không đủ gas để thực hiện giao dịch. Vui lòng tăng giới hạn gas.";
+              } else if (err.message.includes("rejected")) {
+                errorMessage = "Giao dịch đã bị từ chối trên Metamask. Vui lòng thử lại.";
+              } else if (err.message.includes("account")) {
+                errorMessage = "Vấn đề về tài khoản Metamask. Vui lòng kiểm tra lại tài khoản đã được mở khóa.";
+              } else if (err.message.includes("Returned values")) {
+                errorMessage = "Lỗi khi truy vấn dữ liệu từ hợp đồng. Vui lòng kiểm tra lại kết nối mạng và cài đặt Metamask.";
+              }
+              
+              $('#Aday').html("<p style='color: red;'>Lỗi: " + errorMessage + "</p>");
+              $('#Aday').show();
+            });
+        } else {
+          $('#Aday').html("<p style='color: red;'>Không tìm thấy tài khoản Metamask. Vui lòng mở khóa ví Metamask.</p>");
+          $('#Aday').show();
+        }
+      })
+      .catch(function(err) {
+        console.error("Lỗi khi yêu cầu tài khoản Metamask:", err);
+        $('#Aday').html("<p style='color: red;'>Lỗi khi kết nối Metamask: " + err.message + "</p>");
+        $('#Aday').show();
+      });
+  },
+  
+  // Thêm phương thức để xử lý việc thiết lập ngày bỏ phiếu
+  setDates: function(startDate, endDate) {
+    // Kiểm tra dữ liệu đầu vào
+    if (endDate <= startDate) {
+      $('#Aday').html("<p style='color: red;'>Ngày kết thúc phải sau ngày bắt đầu</p>");
+      $('#Aday').show();
+      return;
+    }
+    
+    // Kiểm tra Metamask
+    if (!window.ethereum) {
+      $('#Aday').html("<p style='color: red;'>Không tìm thấy Metamask. Vui lòng cài đặt Metamask để tiếp tục.</p>");
+      $('#Aday').show();
+      return;
+    }
+    
+    // Hiển thị trạng thái
+    $('#Aday').html("<p style='color: white;'>Đang xử lý, vui lòng chờ và xác nhận trong Metamask...</p>");
+    $('#Aday').show();
+    
+    // Đảm bảo có kết nối tài khoản Metamask trước khi thực hiện
+    window.ethereum.request({ method: 'eth_requestAccounts' })
+      .then(function(accounts) {
+        if (accounts && accounts.length > 0) {
+          App.account = accounts[0];
+          console.log("Tài khoản Metamask đã chọn:", App.account);
+          
+          // Lấy instance hợp đồng
+          VotingContract.deployed()
+            .then(function(instance) {
+              console.log("Đã lấy instance hợp đồng:", instance.address);
+              
+              // Gọi hàm setDates với gas cao hơn
+              return instance.setDates(startDate, endDate, {
+                from: App.account,
+                gas: 5000000,  // Tăng gas cao hơn
+                gasPrice: window.eth.utils.toWei('50', 'gwei')  // Chỉ định rõ ràng gasPrice
+              });
+            })
+            .then(function(result) {
+              console.log("Kết quả thiết lập ngày bỏ phiếu thành công:", result);
+              $('#Aday').html("<p style='color: white;'>Đã thiết lập ngày bỏ phiếu thành công! Đang làm mới trang...</p>");
+              $('#Aday').show();
+              
+              // Làm mới trang sau 2 giây
+              setTimeout(function() {
+                window.location.reload();
+              }, 2000);
+            })
+            .catch(function(err) {
+              console.error("Lỗi khi thiết lập ngày bỏ phiếu:", err);
+              let errorMessage = "Lỗi không xác định: " + err.message;
+              
+              if (err.message.includes("gas")) {
+                errorMessage = "Không đủ gas để thực hiện giao dịch. Vui lòng tăng giới hạn gas.";
+              } else if (err.message.includes("rejected")) {
+                errorMessage = "Giao dịch đã bị từ chối trên Metamask. Vui lòng thử lại.";
+              } else if (err.message.includes("account")) {
+                errorMessage = "Vấn đề về tài khoản Metamask. Vui lòng kiểm tra lại tài khoản đã được mở khóa.";
+              } else if (err.message.includes("require")) {
+                errorMessage = "Không thể thiết lập ngày bỏ phiếu. Ngày bỏ phiếu đã được thiết lập trước đó hoặc ngày không hợp lệ.";
+              } else if (err.message.includes("Returned values")) {
+                errorMessage = "Lỗi khi truy vấn dữ liệu từ hợp đồng. Vui lòng kiểm tra lại kết nối mạng và cài đặt Metamask.";
+              }
+              
+              $('#Aday').html("<p style='color: red;'>Lỗi: " + errorMessage + "</p>");
+              $('#Aday').show();
+            });
+        } else {
+          $('#Aday').html("<p style='color: red;'>Không tìm thấy tài khoản Metamask. Vui lòng mở khóa ví Metamask.</p>");
+          $('#Aday').show();
+        }
+      })
+      .catch(function(err) {
+        console.error("Lỗi khi yêu cầu tài khoản Metamask:", err);
+        $('#Aday').html("<p style='color: red;'>Lỗi khi kết nối Metamask: " + err.message + "</p>");
+        $('#Aday').show();
+      });
+  }
+};
+
+// Hàm định dạng ngày theo kiểu Việt Nam
+function formatVietnameseDate(date) {
+  var day = date.getDate();
+  var month = date.getMonth() + 1;
+  var year = date.getFullYear();
+  
+  // Thêm số 0 phía trước nếu cần
+  day = (day < 10) ? '0' + day : day;
+  month = (month < 10) ? '0' + month : month;
+  
+  return day + '/' + month + '/' + year;
+}
+
+window.addEventListener("load", function() {
+  console.log("Đang khởi tạo ứng dụng...");
+  
+  // Thêm sự kiện click cho nút chọn lại tài khoản khi trang đã tải
+  $(document).ready(function() {
+    console.log("Document ready, gắn sự kiện cho #switchAccount");
+    $('#switchAccount').click(function() {
+      console.log("Đã nhấn nút #switchAccount trong sidebar");
+      App.connectMetamask(true);
+      return false; // Ngăn chặn hành vi mặc định
+    });
+  });
+  
+  if (typeof window.ethereum !== "undefined") {
+    console.log("Đã phát hiện Metamask, đang khởi tạo Web3...");
+    
+    // Thử kết nối Metamask nhẹ nhàng mà không yêu cầu tài khoản để kiểm tra trạng thái
+    console.log("Đang kiểm tra trạng thái Metamask trước khi kết nối...");
+    
+    try {
+      // Tạo instance Web3 mới với Metamask provider
+      window.eth = new Web3(window.ethereum);
+      
+      // Kết nối với Metamask một cách rõ ràng
+      window.ethereum.enable()
+        .then(function() {
+          console.log("Metamask đã được kết nối thành công");
+          
+          // Kiểm tra kết nối mạng blockchain
+          window.ethereum.request({ method: 'net_version' })
+            .then(function(networkId) {
+              console.log("ID mạng blockchain hiện tại:", networkId);
+              
+              // Kiểm tra xem mạng có hỗ trợ không
+              let isSupportedNetwork = false;
+              let networkName = '';
+              
+              switch(networkId) {
+                case '1': 
+                  networkName = 'Ethereum Mainnet'; 
+                  break;
+                case '3': 
+                  networkName = 'Ropsten Testnet'; 
+                  isSupportedNetwork = true;
+                  break;  
+                case '4': 
+                  networkName = 'Rinkeby Testnet'; 
+                  isSupportedNetwork = true;
+                  break;
+                case '5': 
+                  networkName = 'Goerli Testnet'; 
+                  isSupportedNetwork = true;
+                  break;
+                case '11155111': 
+                  networkName = 'Sepolia Testnet'; 
+                  isSupportedNetwork = true;
+                  break;
+                case '1337': 
+                case '5777':
+                  networkName = 'Local Blockchain (Ganache/Truffle)'; 
+                  isSupportedNetwork = true;
+                  break;
+                default: 
+                  networkName = 'Mạng không xác định (ID: ' + networkId + ')'; 
+                  break;
+              }
+              
+              console.log("Đang kết nối tới mạng:", networkName);
+              
+              if (!isSupportedNetwork) {
+                console.warn("Mạng blockchain hiện tại có thể không được hỗ trợ bởi ứng dụng.");
+                alert("Cảnh báo: Bạn đang kết nối với mạng " + networkName + " có thể không được hỗ trợ bởi ứng dụng. Hợp đồng có thể không tồn tại trên mạng này.");
+              }
+              
+              // Lắng nghe sự kiện thay đổi tài khoản
+              window.ethereum.on('accountsChanged', function (accounts) {
+                console.log('Tài khoản Metamask đã thay đổi thành:', accounts[0]);
+                
+                // Cập nhật App.account trước khi làm mới trang
+                if (accounts && accounts.length > 0) {
+                  App.account = accounts[0];
+                  console.log("App.account đã được cập nhật thành:", App.account);
+                } else {
+                  App.account = null;
+                  console.log("App.account đã được đặt lại thành null");
+                }
+                
+                // Cập nhật hiển thị tài khoản
+                App.updateAccountDisplay();
+                
+                alert('Tài khoản Metamask đã thay đổi. Đang làm mới trang...');
+                window.location.reload();
+              });
+              
+              // Lắng nghe sự kiện thay đổi mạng
+              window.ethereum.on('chainChanged', function (chainId) {
+                console.log('Mạng Metamask đã thay đổi thành:', chainId);
+                alert('Mạng Metamask đã thay đổi. Đang làm mới trang...');
+                window.location.reload();
+              });
+              
+              window.App.eventStart();
+            })
+            .catch(function(error) {
+              console.error("Lỗi khi lấy thông tin mạng blockchain:", error);
+              alert("Lỗi khi lấy thông tin mạng blockchain: " + error.message);
+            });
+        })
+        .catch(function(error) {
+          console.error("Lỗi khi kết nối với Metamask:", error);
+          alert("Không thể kết nối với Metamask. Vui lòng mở khóa ví Metamask của bạn và làm mới trang.");
+        });
+    } catch (error) {
+      console.error("Lỗi khi khởi tạo Web3:", error);
+      alert("Lỗi khi khởi tạo Web3: " + error.message);
+    }
+  } else {
+    console.warn("Không phát hiện Metamask. Vui lòng cài đặt Metamask để sử dụng ứng dụng.");
+    alert("Không phát hiện Metamask. Vui lòng cài đặt Metamask để sử dụng ứng dụng.");
+  }
+});
+
+================
+File: src/js/login.js
+================
+const loginForm = document.getElementById('loginForm');
+const voterIdInput = document.getElementById('voter-id');
+const passwordInput = document.getElementById('password');
+const voterIdError = document.getElementById('voter-id-error');
+const passwordError = document.getElementById('password-error');
+const loginError = document.getElementById('login-error');
+
+// Hiệu ứng loading cho nút đăng nhập
+function setLoading(isLoading) {
+  const loginButton = document.querySelector('.btn-login');
+  if (isLoading) {
+    loginButton.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Đang xử lý...';
+    loginButton.disabled = true;
+    loginButton.style.opacity = '0.8';
+  } else {
+    loginButton.innerHTML = 'Đăng Nhập';
+    loginButton.disabled = false;
+    loginButton.style.opacity = '1';
+  }
+}
+
+// Kiểm tra đầu vào
+function validateInputs() {
+  let isValid = true;
+  
+  // Ẩn tất cả thông báo lỗi
+  voterIdError.style.display = 'none';
+  passwordError.style.display = 'none';
+  loginError.style.display = 'none';
+  
+  // Kiểm tra mã cử tri
+  if (!voterIdInput.value.trim()) {
+    voterIdError.style.display = 'block';
+    voterIdInput.style.borderColor = '#ff5c5c';
+    isValid = false;
+  } else {
+    voterIdInput.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+  }
+  
+  // Kiểm tra mật khẩu
+  if (!passwordInput.value.trim()) {
+    passwordError.style.display = 'block';
+    passwordInput.style.borderColor = '#ff5c5c';
+    isValid = false;
+  } else {
+    passwordInput.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+  }
+  
+  return isValid;
+}
+
+// Hiệu ứng rung khi lỗi
+function shakeElement(element) {
+  element.classList.add('shake');
+  setTimeout(() => {
+    element.classList.remove('shake');
+  }, 500);
+}
+
+// Thêm hiệu ứng CSS cho animation rung
+const style = document.createElement('style');
+style.innerHTML = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+  .shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  }
+`;
+document.head.appendChild(style);
+
+loginForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  
+  // Kiểm tra đầu vào
+  if (!validateInputs()) {
+    shakeElement(document.querySelector('.login-container'));
+    return;
+  }
+  
+  // Hiển thị trạng thái loading
+  setLoading(true);
+
+  const voter_id = voterIdInput.value;
+  const password = passwordInput.value;
+  const token = voter_id;
+
+  const headers = {
+    'method': "GET",
+    'Authorization': `Bearer ${token}`,
+  };
+
+  fetch(`http://127.0.0.1:8000/login?voter_id=${voter_id}&password=${password}`, { headers })
+  .then(response => {
+    if (response.ok) {
+      return response.json();
+    } else {
+      throw new Error('Đăng nhập không thành công');
+    }
+  })
+  .then(data => {
+    if (data.role === 'admin') {
+      console.log('Đăng nhập thành công với vai trò:', data.role);
+      localStorage.setItem('jwtTokenAdmin', data.token);
+      
+      // Hiển thị thông báo thành công trước khi chuyển hướng
+      loginError.textContent = 'Đăng nhập thành công! Đang chuyển hướng...';
+      loginError.style.color = '#4CAF50';
+      loginError.style.display = 'block';
+      
+      setTimeout(() => {
+        window.location.replace(`http://127.0.0.1:8080/admin.html?Authorization=Bearer ${localStorage.getItem('jwtTokenAdmin')}`);
+      }, 1000);
+    } else if (data.role === 'user'){
+      console.log('Đăng nhập thành công với vai trò:', data.role);
+      localStorage.setItem('jwtTokenVoter', data.token);
+      
+      // Hiển thị thông báo thành công trước khi chuyển hướng
+      loginError.textContent = 'Đăng nhập thành công! Đang chuyển hướng...';
+      loginError.style.color = '#4CAF50';
+      loginError.style.display = 'block';
+      
+      setTimeout(() => {
+        window.location.replace(`http://127.0.0.1:8080/index.html?Authorization=Bearer ${localStorage.getItem('jwtTokenVoter')}`);
+      }, 1000);
+    } else {
+      throw new Error('Vai trò người dùng không hợp lệ');
+    }
+  })
+  .catch(error => {
+    console.error('Lỗi đăng nhập:', error.message);
+    setLoading(false);
+    
+    // Hiển thị thông báo lỗi
+    loginError.textContent = 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin đăng nhập.';
+    loginError.style.display = 'block';
+    shakeElement(document.querySelector('.login-container'));
+  });
+});
+
+// Thêm hiệu ứng khi focus vào input
+voterIdInput.addEventListener('focus', () => {
+  voterIdInput.parentElement.style.boxShadow = 'var(--glow)';
+});
+
+voterIdInput.addEventListener('blur', () => {
+  voterIdInput.parentElement.style.boxShadow = 'none';
+});
+
+passwordInput.addEventListener('focus', () => {
+  passwordInput.parentElement.style.boxShadow = 'var(--glow)';
+});
+
+passwordInput.addEventListener('blur', () => {
+  passwordInput.parentElement.style.boxShadow = 'none';
+});
+
+// Xóa thông báo lỗi khi người dùng bắt đầu nhập lại
+voterIdInput.addEventListener('input', () => {
+  voterIdError.style.display = 'none';
+  voterIdInput.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+  loginError.style.display = 'none';
+});
+
+passwordInput.addEventListener('input', () => {
+  passwordError.style.display = 'none';
+  passwordInput.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+  loginError.style.display = 'none';
+});
+
+================
+File: src/.gitignore
+================
+dist
+
+================
+File: .gitignore
+================
+node_modules
+build
+package-lock.json
+
+================
+File: index.js
+================
+const express = require('express');
+const path = require('path');
+const jwt = require('jsonwebtoken');
+
+require('dotenv').config();
+
+const app = express();
+
+
+// Authorization middleware
+const authorizeUser = (req, res, next) => {
+  const token = req.query.Authorization?.split('Bearer ')[1];
+
+  if (!token) {
+    return res.status(401).send('<h1 align="center"> Login to Continue </h1>');
+  }
+  
+  try {
+    // Verify and decode the token
+    const decodedToken = jwt.verify(token, process.env.SECRET_KEY, { algorithms: ['HS256'] });
+
+    req.user = decodedToken;
+    next(); // Proceed to the next middleware
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid authorization token' });
+  }
+};
+
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/html/login.html'));
+});
+
+app.get('/js/login.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/js/login.js'))
+});
+
+app.get('/css/login.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/css/login.css'))
+});
+
+app.get('/css/index.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/css/index.css'))
+});
+
+app.get('/css/admin.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/css/admin.css'))
+});
+
+app.get('/assets/eth5.jpg', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/assets/eth5.jpg'))
+});
+
+app.get('/js/app.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/js/app.js'))
+});
+
+app.get('/admin.html', authorizeUser, (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/html/admin.html'));
+});
+
+app.get('/index.html', authorizeUser, (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/html/index.html'));
+});
+
+app.get('/dist/login.bundle.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/dist/login.bundle.js'));
+});
+
+app.get('/dist/app.bundle.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/dist/app.bundle.js'));
+});
+
+// Serve the favicon.ico file
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/favicon.ico'));
+});
+
+// Start the server
+app.listen(8080, () => {
+  console.log('Server listening on http://localhost:8080');
+});
+
+================
+File: LICENSE
+================
+MIT License
+
+Copyright (c) 2023 Krish Depani
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================
+File: mining_coint.py
+================
+from web3 import Web3
+
+# Kết nối với Ganache
+ganache_url = "http://127.0.0.1:7545"  # RPC của Ganache
+web3 = Web3(Web3.HTTPProvider(ganache_url))
+
+# Kiểm tra kết nối
+if web3.is_connected():
+    print("✅ Đã kết nối với Ganache!")
+else:
+    print("❌ Kết nối thất bại!")
+    exit()
+
+# Lấy danh sách tài khoản từ Ganache
+accounts = web3.eth.accounts  # <<--- Thêm dòng này để định nghĩa biến accounts
+
+# Chọn 2 tài khoản trong danh sách
+sender = accounts[0]  # Người gửi
+receiver = accounts[1]  # Người nhận
+
+# Kiểm tra số dư trước khi gửi
+print(f"Số dư ban đầu của {sender}: {web3.eth.get_balance(sender)} wei")
+print(f"Số dư ban đầu của {receiver}: {web3.eth.get_balance(receiver)} wei")
+
+# Tạo giao dịch
+tx = {
+    'from': sender,
+    'to': receiver,
+    'value': web3.to_wei(0.1, 'ether'),  # Chuyển 0.1 ETH
+    'gas': 21000,
+    'gasPrice': web3.to_wei(50, 'gwei'),
+    'nonce': web3.eth.get_transaction_count(sender)
+}
+
+# Ký giao dịch (Vì Ganache có sẵn private key, không cần nhập tay)
+tx_hash = web3.eth.send_transaction(tx)
+
+# Hiển thị kết quả
+print(f"✅ Giao dịch đã gửi, hash: {tx_hash.hex()}")
+
+================
+File: package.json
+================
+{
+  "name": "decentralized-voting",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0",
+    "@truffle/contract": "^4.6.18",
+    "browserify": "^17.0.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "web3": "^1.9.0"
+  }
+}
+
+================
+File: README.md
+================
+# Decentralized-Voting-System-Using-Ethereum-Blockchain
+
+#### The Decentralized Voting System using Ethereum Blockchain is a secure and transparent solution for conducting elections. Leveraging Ethereum's blockchain technology, this system ensures tamper-proof voting records, enabling users to cast their votes remotely while maintaining anonymity and preventing fraud. Explore this innovative project for trustworthy and decentralized voting processes.
+#### For a cool demo of this project watch this [YouTube video](https://www.youtube.com/watch?v=a5CJ70D2P-E).
+#### For more details checkout [Project Report](https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain/blob/main/Project%20Report%20github.pdf).
+#### PS: This project is not maintained anymore.
+
+## Features
+-  Implements JWT for secure voter authentication and authorization.
+-  Utilizes Ethereum blockchain for tamper-proof and transparent voting records.
+-  Removes the need for intermediaries, ensuring a trustless voting process.
+-  Admin panel to manage candidates, set voting dates, and monitor results.
+-  Intuitive UI for voters to cast votes and view candidate information.
+
+## Requirements
+- Node.js (version – 18.14.0)
+- Metamask
+- Python (version – 3.9)
+- FastAPI
+- MySQL Database (port – 3306)
+
+## Screenshots
+
+![Login Page](https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain/blob/main/public/login%20ss.png)
+
+![Admin Page](https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain/blob/main/public/admin%20ss.png)
+
+![Voter Page](https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain/blob/main/public/index%20ss.png)
+
+## Installation
+
+1. Open a terminal.
+
+2. Clone the repository by using the command
+        
+        git clone https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain.git
+
+3. Download and install [Ganache](https://trufflesuite.com/ganache/).
+
+4. Create a workspace named <b>developement</b>, in the truffle projects section add `truffle-config.js` by clicking `ADD PROJECT` button.
+
+5. Download [Metamask](https://metamask.io/download/) extension for the browser.
+
+6. Now create wallet (if you don't have one), then import accounts from ganache.
+
+7. Add network to the metamask. ( Network name - Localhost 7575, RPC URl - http://localhost:7545, Chain ID - 1337, Currency symbol - ETH)
+
+8. Open MySQL and create database named <b>voter_db</b>. (DON'T USE XAMPP)
+
+9. In the database created, create new table named <b>voters</b> in the given format and add some values.
+
+           CREATE TABLE voters (
+           voter_id VARCHAR(36) PRIMARY KEY NOT NULL,
+           role ENUM('admin', 'user') NOT NULL,
+           password VARCHAR(255) NOT NULL
+           );
+   <br>
+
+        +--------------------------------------+-------+-----------+
+        | voter_id                             | role  | password  |
+        +--------------------------------------+-------+-----------+
+        |                                      |       |           |
+        +--------------------------------------+-------+-----------+
+
+12. Install truffle globally
+    
+        npm install -g truffle
+
+14. Go to the root directory of repo and install node modules
+
+        npm install
+
+15. Install python dependencies
+
+        pip install fastapi mysql-connector-python pydantic python-dotenv uvicorn uvicorn[standard] PyJWT
+
+## Usage
+
+#### Note: Update the database credentials in the `./Database_API/.env` file.
+
+1. Open terminal at the project directory
+
+2. Open Ganache and it's <b>development</b> workspace.
+
+3. open terminal in project's root directory and run the command
+
+        truffle console
+   then compile the smart contracts with command
+
+        compile
+   exit the truffle console
+
+5. Bundle app.js with browserify
+    
+        browserify ./src/js/app.js -o ./src/dist/app.bundle.js
+
+2. Start the node server server
+    
+        node index.js
+
+3. Navigate to `Database_API` folder in another terminal
+    
+        cd Database_API
+    then start the database server by following command
+
+        uvicorn main:app --reload --host 127.0.0.1
+
+4. In a new terminal migrate the truffle contract to local blockchain
+    
+        truffle migrate
+
+You're all set! The Voting app should be up and running now at http://localhost:8080/.<br>
+For more info about usage checkout [YouTube video](https://www.youtube.com/watch?v=a5CJ70D2P-E).
+
+## Code Structure
+
+    ├── blockchain-voting-dapp            # Root directory of the project.
+        ├── build                         # Directory containing compiled contract artifacts.
+        |   └── contracts                 
+        |       ├── Migrations.json       
+        |       └── Voting.json           
+        ├── contracts                     # Directory containing smart contract source code.
+        |   ├── 2_deploy_contracts.js     
+        |   ├── Migrations.sol            
+        |   └── Voting.sol                
+        ├── Database_API                  # API code for database communication.
+        |   └── main.py                   
+        ├── migrations                    # Ethereum contract deployment scripts.
+        |   └── 1_initial_migration.js    
+        ├── node_modules                  # Node.js modules and dependencies.
+        ├── public                        # Public assets like favicon.
+        |   └── favicon.ico               
+        ├── src                           
+        |   ├── assets                    # Project images.
+        |   |   └── eth5.jpg              
+        |   ├── css                       # CSS stylesheets.
+        |   |   ├── admin.css             
+        |   |   ├── index.css             
+        |   |   └── login.css             
+        |   ├── dist                      # Compiled JavaScript bundles.
+        |   |   ├── app.bundle.js         
+        |   |   └── login.bundle.js       
+        |   ├── html                      # HTML templates.
+        |   |   ├── admin.html            
+        |   |   ├── index.html            
+        |   |   └── login.html            
+        |   └── js                        # JavaScript logic files.
+        |       ├── app.js                
+        |       └── login.js              
+        ├── index.js                      # Main entry point for Node.js application.
+        ├── package.json                  # Node.js package configuration.
+        ├── package-lock.json             # Lockfile for package dependencies.
+        ├── README.md                     # Project documentation.
+        └── truffle-config.js                    # Truffle configuration file.
+
+## License
+
+The code in this repository is licensed under the MIT License. This means that you are free to use, modify, and distribute the code, as long as you include the original copyright and license notice. For more information about LICENSE please click [here](https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain/blob/main/LICENSE).
+
+## If you like this project, please give it a 🌟.
+## Thank you 😊.
+
+================
+File: truffle-config.js
+================
+module.exports = {
+  // See <http://truffleframework.com/docs/advanced/configuration>
+  // for more about customizing your Truffle configuration!
+  networks: {
+    development: {
+      host: "127.0.0.1",
+      port: 7545,
+      network_id: "*" // Match any network id
+    }
+  }
+}
+
+
+
+================================================================
+End of Codebase
+================================================================

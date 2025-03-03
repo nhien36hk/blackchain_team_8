@@ -1,48 +1,269 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Voting Page</title>
+    <title>Trang Bỏ Phiếu</title>
 
     <link rel="stylesheet" type="text/css" href="../css/index.css">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary-color: #2a5298;
+        --secondary-color: #198a7b;
+        --accent-color: #4d8dff;
+        --dark-bg: #1a1a2e;
+        --medium-bg: #16213e;
+        --light-bg: #0f3460;
+        --text-light: #e1e1e6;
+        --text-dim: #b8b8c3;
+        --glow: 0 0 10px rgba(77, 141, 255, 0.6);
+      }
+      
+      body {
+        font-family: 'Montserrat', sans-serif;
+        background: var(--dark-bg);
+        color: var(--text-light);
+        margin: 0;
+        padding: 0;
+        background-image: linear-gradient(135deg, var(--dark-bg) 0%, var(--medium-bg) 100%);
+        background-attachment: fixed;
+      }
+      
+      .text-center {
+        text-align: center;
+      }
+      
+      #head {
+        background: var(--medium-bg);
+        padding: 20px 0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+      }
+      
+      #head::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(77, 141, 255, 0.1) 0%, rgba(26, 26, 46, 0) 70%);
+        z-index: 0;
+      }
+      
+      #head h1 {
+        font-weight: 600;
+        margin: 0;
+        padding: 10px;
+        background: linear-gradient(90deg, #ffffff, #4d8dff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        position: relative;
+        z-index: 1;
+        font-size: 2.2rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      #head h2 {
+        color: var(--text-light);
+        font-weight: 500;
+        margin: 15px 0;
+        font-size: 1.6rem;
+      }
+      
+      #head h3 {
+        color: var(--accent-color);
+        font-weight: normal;
+        font-size: 1.2rem;
+      }
+      
+      .container {
+        background: var(--medium-bg);
+        border-radius: 10px;
+        padding: 25px;
+        margin: 20px auto;
+        max-width: 900px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(77, 141, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+      }
+      
+      .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 20px 0;
+      }
+      
+      .table thead tr {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      
+      .table th {
+        color: var(--accent-color);
+        font-weight: 600;
+        padding: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 2px solid rgba(77, 141, 255, 0.2);
+        font-size: 0.9rem;
+      }
+      
+      .table td {
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s;
+      }
+      
+      .table tbody tr:hover td {
+        background: rgba(77, 141, 255, 0.05);
+      }
+      
+      input[type="radio"] {
+        accent-color: var(--accent-color);
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        vertical-align: middle;
+        cursor: pointer;
+      }
+      
+      #vote {
+        margin-top: 30px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        border-left: 3px solid var(--accent-color);
+      }
+      
+      #vote p {
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+      }
+      
+      .btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 1.1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 5px 15px rgba(25, 138, 123, 0.3);
+      }
+      
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(25, 138, 123, 0.5);
+      }
+      
+      .btn:disabled {
+        background: #555;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        opacity: 0.7;
+      }
+      
+      #msg {
+        margin-top: 15px;
+        padding: 10px;
+        font-weight: 500;
+        color: var(--accent-color);
+        font-size: 1.1rem;
+      }
+      
+      #accountAddress {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        border-radius: 5px;
+        font-family: monospace;
+        margin: 30px auto;
+        max-width: 900px;
+        word-break: break-all;
+        border-left: 3px solid var(--accent-color);
+      }
+      
+      /* Hiệu ứng cho các thẻ */
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(77, 141, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0); }
+      }
+      
+      .btn-primary {
+        animation: pulse 2s infinite;
+      }
+      
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+          margin: 15px;
+        }
+        
+        .table th, .table td {
+          padding: 10px;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="head" class="text-center">
-      <h1 align="center">Decentralized Voting Using Ethereum Blockchain</h1>
-      <h2 align="center">Welcome for Voting</h2> 
-      <h3 align="center"><p>Voting Dates: <span id="dates"></span></p></h3>
-      <br/> 
+      <h1 align="center">Hệ Thống Bỏ Phiếu Phi Tập Trung Trên Blockchain Ethereum</h1>
+      <h2 align="center">Chào Mừng Đến Trang Bỏ Phiếu</h2> 
+      <h3 align="center">Thời Gian Bỏ Phiếu: <span id="dates"></span></h3>
     </div>
+    
+    <div id="account" class="container">
+      <p id="accountAddress" class="text-center"></p>
+      <div class="text-center">
+        <button id="switchAccount" class="btn">Chọn Lại Tài Khoản Metamask</button>
+      </div>
+    </div>
+    
     <div id="candidate" class="container"> 
       <table class="table text-center">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Party</th>
-            <th>Total Vote</th>
+            <th>Tên Ứng Cử Viên</th>
+            <th>Đảng Phái</th>
+            <th>Tổng Số Phiếu</th>
           </tr>
         </thead>
         <tbody id="boxCandidate"></tbody>
       </table>
-      <br/>
+      
       <div id="vote">
-        <p>Please select one of the candidates and click the vote button.</p>
-        <button id="voteButton" class="btn btn-primary" onclick="App.vote()" disabled>Vote</button>
+        <p>Vui lòng chọn một ứng cử viên và nhấn nút bỏ phiếu.</p>
+        <button id="voteButton" class="btn btn-primary" onclick="App.vote()" disabled>Bỏ Phiếu</button>
         <div id="msg"></div>
-  
         <div id="vote-box"></div>
       </div>
     </div>
-  
-    <div id="account">
-          <p id="accountAddress" class="text-center"></p>
-    </div>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
-  <script src="../dist/app.bundle.js" type="module"></script>
+    <script src="../dist/app.bundle.js" type="module"></script>
   </body>
 </html>

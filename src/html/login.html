@@ -1,31 +1,270 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login Page</title>
-  <link rel="stylesheet" type="text/css" href="../css/login.css">
-
+  <title>Đăng Nhập - Hệ Thống Bỏ Phiếu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #2a5298;
+      --secondary-color: #198a7b;
+      --accent-color: #4d8dff;
+      --dark-bg: #1a1a2e;
+      --medium-bg: #16213e;
+      --light-bg: #0f3460;
+      --text-light: #e1e1e6;
+      --text-dim: #b8b8c3;
+      --glow: 0 0 10px rgba(77, 141, 255, 0.6);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-image: linear-gradient(135deg, var(--dark-bg) 0%, var(--medium-bg) 100%);
+      background-attachment: fixed;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Hiệu ứng nền */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 50%, rgba(77, 141, 255, 0.1) 0%, rgba(26, 26, 46, 0) 70%);
+      z-index: -1;
+    }
+    
+    /* Hiệu ứng lưới */
+    body::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(77, 141, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(77, 141, 255, 0.05) 1px, transparent 1px);
+      background-size: 30px 30px;
+      z-index: -1;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #ffffff, #4d8dff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .login-container {
+      width: 400px;
+      padding: 40px;
+      background: var(--medium-bg);
+      border-radius: 15px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(77, 141, 255, 0.1);
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    /* Hiệu ứng viền sáng */
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+    }
+    
+    .login-title {
+      font-size: 1.8rem;
+      color: var(--accent-color);
+      margin-bottom: 30px;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+      position: relative;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    .input-group {
+      position: relative;
+    }
+    
+    .input-group i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent-color);
+      font-size: 1.2rem;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 15px 15px 15px 45px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: all 0.3s;
+      font-family: 'Montserrat', sans-serif;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: var(--glow);
+    }
+    
+    .btn-login {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 5px 15px rgba(25, 138, 123, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-login::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: all 0.6s;
+    }
+    
+    .btn-login:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(25, 138, 123, 0.5);
+    }
+    
+    .btn-login:hover::before {
+      left: 100%;
+    }
+    
+    /* Hiệu ứng animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(77, 141, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0); }
+    }
+    
+    .error-message {
+      color: #ff5c5c;
+      font-size: 0.9rem;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    /* Responsive */
+    @media (max-width: 480px) {
+      .login-container {
+        width: 90%;
+        padding: 30px;
+      }
+      
+      .header h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <h1 align="center" style="color: azure;">Decentralized Voting Using Ethereum Blockchain</h1>
-  <div class="container mt-5">
-    <h1>Login</h1>
+  <div class="header">
+    <h1>Hệ Thống Bỏ Phiếu Phi Tập Trung</h1>
+  </div>
+  
+  <div class="login-container">
+    <h2 class="login-title">Đăng Nhập</h2>
     <form id="loginForm">
       <div class="form-group">
-        <label for="voter-id"><h3>Voter ID</h3></label>
-        <input type="text" class="form-control" id="voter-id" name="voter-id" placeholder="Voter id">
+        <label for="voter-id">Mã Cử Tri</label>
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" class="form-control" id="voter-id" name="voter-id" placeholder="Nhập mã cử tri của bạn">
+        </div>
+        <div class="error-message" id="voter-id-error">Vui lòng nhập mã cử tri</div>
       </div>
+      
       <div class="form-group">
-        <label for="password"><h3>Password</h3></label>
-        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+        <label for="password">Mật Khẩu</label>
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input type="password" class="form-control" id="password" name="password" placeholder="Nhập mật khẩu của bạn">
+        </div>
+        <div class="error-message" id="password-error">Vui lòng nhập mật khẩu</div>
       </div>
-      <button type="submit" class="btn btn-primary"><b>Login</b></button>
+      
+      <button type="submit" class="btn-login">Đăng Nhập</button>
+      <div class="error-message" id="login-error" style="text-align: center; margin-top: 15px;">Đăng nhập không thành công</div>
     </form>
   </div>
+
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
   <script src="../js/login.js" type="module"></script>

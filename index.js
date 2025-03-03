@@ -76,7 +76,16 @@ app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/favicon.ico'));
 });
 
+app.get('/test.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/html/test.html'));
+});
+
+// Thêm route để phục vụ file test.js
+app.get('/js/test.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/js/test.js'));
+});
+
 // Start the server
-app.listen(8080, () => {
-  console.log('Server listening on http://localhost:8080');
+app.listen(3000, () => {
+  console.log('Server listening on http://localhost:3000');
 });

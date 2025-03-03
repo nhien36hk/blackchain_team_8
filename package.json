@@ -4,16 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start": "npx http-server ./src -p 8080",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate --reset",
+    "dev": "webpack --mode development --watch"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "jsonwebtoken": "^9.0.0",
     "@truffle/contract": "^4.6.18",
     "browserify": "^17.0.0",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
     "web3": "^1.9.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
   }
 }
