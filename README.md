@@ -1,23 +1,25 @@
-# Decentralized-Voting-System-Using-Ethereum-Blockchain
+# Hệ Thống Bỏ Phiếu Phi Tập Trung Sử Dụng Blockchain Ethereum
 
-#### The Decentralized Voting System using Ethereum Blockchain is a secure and transparent solution for conducting elections. Leveraging Ethereum's blockchain technology, this system ensures tamper-proof voting records, enabling users to cast their votes remotely while maintaining anonymity and preventing fraud. Explore this innovative project for trustworthy and decentralized voting processes.
+#### Hệ thống bỏ phiếu phi tập trung sử dụng Blockchain Ethereum là một giải pháp an toàn và minh bạch để tổ chức các cuộc bầu cử. Tận dụng công nghệ blockchain của Ethereum, hệ thống này đảm bảo hồ sơ bỏ phiếu không thể bị giả mạo, cho phép người dùng bỏ phiếu từ xa trong khi vẫn duy trì tính ẩn danh và ngăn chặn gian lận. Khám phá dự án sáng tạo này để có quy trình bỏ phiếu đáng tin cậy và phi tập trung.
 #### For a cool demo of this project watch this [YouTube video](https://www.youtube.com/watch?v=a5CJ70D2P-E).
 #### For more details checkout [Project Report](https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain/blob/main/Project%20Report%20github.pdf).
 #### PS: This project is not maintained anymore.
 
-## Features
--  Implements JWT for secure voter authentication and authorization.
--  Utilizes Ethereum blockchain for tamper-proof and transparent voting records.
--  Removes the need for intermediaries, ensuring a trustless voting process.
--  Admin panel to manage candidates, set voting dates, and monitor results.
--  Intuitive UI for voters to cast votes and view candidate information.
+## Tính năng
+- Triển khai JWT để xác thực và ủy quyền cử tri an toàn.
+- Sử dụng blockchain Ethereum để lưu trữ kết quả bỏ phiếu minh bạch và không thể giả mạo.
+- Loại bỏ nhu cầu về trung gian, đảm bảo quy trình bỏ phiếu đáng tin cậy.
+- Bảng điều khiển quản trị để quản lý ứng cử viên, thiết lập ngày bỏ phiếu và theo dõi kết quả.
+- Giao diện người dùng trực quan để cử tri bỏ phiếu và xem thông tin ứng cử viên.
 
-## Requirements
-- Node.js (version – 18.14.0)
+## Yêu cầu
+- Node.js (phiên bản – 18.14.0)
 - Metamask
-- Python (version – 3.9)
+- Python (phiên bản – 3.9)
 - FastAPI
-- MySQL Database (port – 3306)
+- XAMPP với MySQL (cổng – 3306)
+- Ganache (môi trường blockchain cục bộ)
+- Trình duyệt web hiện đại (Chrome, Firefox, Edge)
 
 ## Screenshots
 
@@ -27,135 +29,178 @@
 
 ![Voter Page](https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain/blob/main/public/index%20ss.png)
 
-## Installation
+## Cài đặt
 
-1. Open a terminal.
+1. Mở terminal.
 
-2. Clone the repository by using the command
+2. Clone repository bằng lệnh
         
         git clone https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain.git
 
-3. Download and install [Ganache](https://trufflesuite.com/ganache/).
+3. Tải và cài đặt [Ganache](https://trufflesuite.com/ganache/).
 
-4. Create a workspace named <b>developement</b>, in the truffle projects section add `truffle-config.js` by clicking `ADD PROJECT` button.
+4. Tạo workspace có tên <b>developement</b>, trong phần truffle projects, thêm `truffle-config.js` bằng cách nhấp vào nút `ADD PROJECT`.
 
-5. Download [Metamask](https://metamask.io/download/) extension for the browser.
+5. Tải extension [Metamask](https://metamask.io/download/) cho trình duyệt.
 
-6. Now create wallet (if you don't have one), then import accounts from ganache.
+6. Tạo ví (nếu bạn chưa có), sau đó nhập tài khoản từ Ganache.
 
-7. Add network to the metamask. ( Network name - Localhost 7575, RPC URl - http://localhost:7545, Chain ID - 1337, Currency symbol - ETH)
+7. Thêm mạng vào Metamask. (Tên mạng - Localhost 7575, RPC URl - http://localhost:7545, Chain ID - 1337, Ký hiệu tiền tệ - ETH)
 
-8. Open MySQL and create database named <b>voter_db</b>. (DON'T USE XAMPP)
+8. Cài đặt và cấu hình XAMPP:
+   - Tải và cài đặt [XAMPP](https://www.apachefriends.org/download.html)
+   - Khởi động XAMPP Control Panel
+   - Bắt đầu các dịch vụ Apache và MySQL
+   - Mở phpMyAdmin bằng cách truy cập http://localhost/phpmyadmin
 
-9. In the database created, create new table named <b>voters</b> in the given format and add some values.
+9. Tạo cơ sở dữ liệu trong phpMyAdmin:
+   - Tạo cơ sở dữ liệu mới có tên <b>voter_db</b>
+   - Trong cơ sở dữ liệu đã tạo, tạo bảng mới có tên <b>voters</b> với định dạng sau:
 
            CREATE TABLE voters (
            voter_id VARCHAR(36) PRIMARY KEY NOT NULL,
            role ENUM('admin', 'user') NOT NULL,
            password VARCHAR(255) NOT NULL
            );
-   <br>
 
-        +--------------------------------------+-------+-----------+
-        | voter_id                             | role  | password  |
-        +--------------------------------------+-------+-----------+
-        |                                      |       |           |
-        +--------------------------------------+-------+-----------+
+10. Thêm dữ liệu mẫu vào bảng voters:
+    - Thêm tài khoản admin:
+      ```sql
+      INSERT INTO voters (voter_id, role, password) VALUES ('admin123', 'admin', 'admin123');
+      ```
+    - Thêm tài khoản người dùng:
+      ```sql
+      INSERT INTO voters (voter_id, role, password) VALUES ('user123', 'user', 'user123');
+      ```
 
-12. Install truffle globally
+11. Cập nhật thông tin kết nối cơ sở dữ liệu trong file `./Database_API/.env`:
+    ```
+        MYSQL_USER="root"
+        MYSQL_PASSWORD=""
+        MYSQL_HOST="localhost"
+        MYSQL_DB="voter_db"
+        SECRET_KEY="d2b861a623b1d0e89f7c91c313bce1db34fbce8356ca80cf38b72e4c5a832ed5f0fa7136ef0ed5c32641308daa88c29c108d85835afcf37e5385c8e2c4cacee6"
+    ```
+
+12. Cài đặt truffle toàn cục
     
         npm install -g truffle
 
-14. Go to the root directory of repo and install node modules
+13. Đi đến thư mục gốc của repo và cài đặt các module node
 
         npm install
 
-15. Install python dependencies
+14. Cài đặt các thư viện phụ thuộc của Python
 
         pip install fastapi mysql-connector-python pydantic python-dotenv uvicorn uvicorn[standard] PyJWT
 
-## Usage
+15. Cài đặt http-server (nếu chưa có)
 
-#### Note: Update the database credentials in the `./Database_API/.env` file.
+        npm install --save-dev http-server
 
-1. Open terminal at the project directory
+## Sử dụng
 
-2. Open Ganache and it's <b>development</b> workspace.
+1. Mở terminal tại thư mục dự án
 
-3. open terminal in project's root directory and run the command
+2. Mở Ganache và workspace <b>development</b>.
+
+3. Mở terminal trong thư mục gốc của dự án và chạy lệnh
 
         truffle console
-   then compile the smart contracts with command
+   sau đó biên dịch các hợp đồng thông minh với lệnh
 
         compile
-   exit the truffle console
+   thoát khỏi truffle console
 
-5. Bundle app.js with browserify
+4. Đóng gói app.js với browserify
     
         browserify ./src/js/app.js -o ./src/dist/app.bundle.js
 
-2. Start the node server server
+5. Khởi động máy chủ node
     
         node index.js
 
-3. Navigate to `Database_API` folder in another terminal
+6. Điều hướng đến thư mục `Database_API` trong một terminal khác
     
         cd Database_API
-    then start the database server by following command
+    sau đó khởi động máy chủ cơ sở dữ liệu bằng lệnh sau
 
         uvicorn main:app --reload --host 127.0.0.1
 
-4. In a new terminal migrate the truffle contract to local blockchain
+7. Trong một terminal mới, triển khai hợp đồng truffle vào blockchain cục bộ
     
-        truffle migrate
+        truffle migrate --reset
 
-You're all set! The Voting app should be up and running now at http://localhost:8080/.<br>
-For more info about usage checkout [YouTube video](https://www.youtube.com/watch?v=a5CJ70D2P-E).
+8. Đảm bảo XAMPP đang chạy với các dịch vụ Apache và MySQL hoạt động
 
-## Code Structure
+Bạn đã hoàn tất! Ứng dụng Bỏ phiếu sẽ hoạt động tại http://localhost:3000/.
 
-    ├── blockchain-voting-dapp            # Root directory of the project.
-        ├── build                         # Directory containing compiled contract artifacts.
+## Xử lý sự cố
+
+1. **Lỗi kết nối Metamask**:
+   - Đảm bảo Metamask đã được cài đặt và mở khóa
+   - Kiểm tra cấu hình mạng trong Metamask (RPC URL: http://localhost:7545, Chain ID: 1337)
+   - Làm mới trang và thử lại
+
+2. **Lỗi kết nối cơ sở dữ liệu**:
+   - Kiểm tra XAMPP đang chạy và dịch vụ MySQL đang hoạt động
+   - Xác minh thông tin kết nối trong file `.env` là chính xác
+   - Kiểm tra cơ sở dữ liệu và bảng đã được tạo đúng cách
+
+3. **Lỗi hợp đồng thông minh**:
+   - Đảm bảo Ganache đang chạy và có sẵn các tài khoản
+   - Thử triển khai lại hợp đồng với `truffle migrate --reset`
+   - Kiểm tra địa chỉ hợp đồng trong file `app.js` đã được cập nhật
+
+4. **Lỗi "Out of Gas"**:
+   - Kiểm tra tài khoản Metamask có đủ ETH
+   - Đảm bảo mạng được cấu hình đúng
+   - Thử lại với một tài khoản khác từ Ganache
+
+## Cấu trúc mã
+
+    ├── blockchain-voting-dapp            # Thư mục gốc của dự án.
+        ├── build                         # Thư mục chứa các artifact hợp đồng đã biên dịch.
         |   └── contracts                 
         |       ├── Migrations.json       
         |       └── Voting.json           
-        ├── contracts                     # Directory containing smart contract source code.
+        ├── contracts                     # Thư mục chứa mã nguồn hợp đồng thông minh.
         |   ├── 2_deploy_contracts.js     
         |   ├── Migrations.sol            
         |   └── Voting.sol                
-        ├── Database_API                  # API code for database communication.
+        ├── Database_API                  # Mã API cho giao tiếp cơ sở dữ liệu.
         |   └── main.py                   
-        ├── migrations                    # Ethereum contract deployment scripts.
+        ├── migrations                    # Script triển khai hợp đồng Ethereum.
         |   └── 1_initial_migration.js    
-        ├── node_modules                  # Node.js modules and dependencies.
-        ├── public                        # Public assets like favicon.
+        ├── node_modules                  # Module và phụ thuộc Node.js.
+        ├── public                        # Tài sản công khai như favicon.
         |   └── favicon.ico               
         ├── src                           
-        |   ├── assets                    # Project images.
+        |   ├── assets                    # Hình ảnh dự án.
         |   |   └── eth5.jpg              
-        |   ├── css                       # CSS stylesheets.
+        |   ├── css                       # Stylesheet CSS.
         |   |   ├── admin.css             
         |   |   ├── index.css             
         |   |   └── login.css             
-        |   ├── dist                      # Compiled JavaScript bundles.
+        |   ├── dist                      # Bundle JavaScript đã biên dịch.
         |   |   ├── app.bundle.js         
         |   |   └── login.bundle.js       
-        |   ├── html                      # HTML templates.
+        |   ├── html                      # Template HTML.
         |   |   ├── admin.html            
         |   |   ├── index.html            
         |   |   └── login.html            
-        |   └── js                        # JavaScript logic files.
+        |   └── js                        # File logic JavaScript.
         |       ├── app.js                
         |       └── login.js              
-        ├── index.js                      # Main entry point for Node.js application.
-        ├── package.json                  # Node.js package configuration.
-        ├── package-lock.json             # Lockfile for package dependencies.
-        ├── README.md                     # Project documentation.
-        └── truffle-config.js                    # Truffle configuration file.
+        ├── index.js                      # Điểm vào chính cho ứng dụng Node.js.
+        ├── package.json                  # Cấu hình gói Node.js.
+        ├── package-lock.json             # Lockfile cho phụ thuộc gói.
+        ├── README.md                     # Tài liệu dự án.
+        └── truffle-config.js             # File cấu hình Truffle.
 
-## License
+## Giấy phép
 
-The code in this repository is licensed under the MIT License. This means that you are free to use, modify, and distribute the code, as long as you include the original copyright and license notice. For more information about LICENSE please click [here](https://github.com/Krish-Depani/Decentralized-Voting-System-Using-Ethereum-Blockchain/blob/main/LICENSE).
+Mã trong repository này được cấp phép theo Giấy phép MIT. Điều này có nghĩa là bạn được tự do sử dụng, sửa đổi và phân phối mã, miễn là bạn bao gồm thông báo bản quyền và giấy phép gốc.
 
-## If you like this project, please give it a 🌟.
-## Thank you 😊.
+## Nếu bạn thích dự án này, hãy cho nó một 🌟.
+## Cảm ơn bạn 😊.
