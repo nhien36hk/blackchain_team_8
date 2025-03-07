@@ -76,6 +76,27 @@ window.App = {
                 console.log("Đang kết nối với mạng: " + networkName);
                 $('#Aday').append("<p style='color: white;'>Đang kết nối với mạng: " + networkName + "</p>");
                 
+                // Kiểm tra xem mạng có hỗ trợ không
+                let isSupportedNetwork = false;
+                switch(chainId) {
+                  case '1337': 
+                  case '5777':
+                    networkName = 'Ganache Local'; 
+                    isSupportedNetwork = true;
+                    break;
+                  default: 
+                    networkName = 'Mạng không được hỗ trợ (ID: ' + chainId + ')'; 
+                    break;
+                }
+                
+                console.log("Đang kết nối tới mạng:", networkName);
+                
+                if (!isSupportedNetwork) {
+                  console.warn("Vui lòng chuyển sang mạng Ganache (http://127.0.0.1:7545)");
+                  alert("Cảnh báo: Bạn cần kết nối với mạng Ganache Local. Vui lòng chuyển mạng trong MetaMask.");
+                  return;
+                }
+                
                 // Thiết lập Web3 provider
                 VotingContract.setProvider(window.ethereum);
                 
@@ -659,19 +680,20 @@ window.addEventListener("load", function() {
                   break;
                 case '1337': 
                 case '5777':
-                  networkName = 'Local Blockchain (Ganache/Truffle)'; 
+                  networkName = 'Ganache Local'; 
                   isSupportedNetwork = true;
                   break;
                 default: 
-                  networkName = 'Mạng không xác định (ID: ' + networkId + ')'; 
+                  networkName = 'Mạng không được hỗ trợ (ID: ' + networkId + ')'; 
                   break;
               }
               
               console.log("Đang kết nối tới mạng:", networkName);
               
               if (!isSupportedNetwork) {
-                console.warn("Mạng blockchain hiện tại có thể không được hỗ trợ bởi ứng dụng.");
-                alert("Cảnh báo: Bạn đang kết nối với mạng " + networkName + " có thể không được hỗ trợ bởi ứng dụng. Hợp đồng có thể không tồn tại trên mạng này.");
+                console.warn("Vui lòng chuyển sang mạng Ganache (http://127.0.0.1:7545)");
+                alert("Cảnh báo: Bạn cần kết nối với mạng Ganache Local. Vui lòng chuyển mạng trong MetaMask.");
+                return;
               }
               
               // Lắng nghe sự kiện thay đổi tài khoản

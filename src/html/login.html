@@ -219,6 +219,42 @@
       margin-top: 5px;
       display: none;
     }
+
+    .network-status {
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .network-status.connected {
+      background: rgba(25, 138, 123, 0.2);
+      color: var(--secondary-color);
+    }
+
+    .network-status.error {
+      background: rgba(255, 92, 92, 0.2);
+      color: #ff5c5c;
+    }
+
+    .account-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      display: none;
+    }
+
+    .account-info.visible {
+      display: block;
+    }
+
+    .account-balance {
+      color: var(--accent-color);
+      font-weight: bold;
+    }
     
     /* Responsive */
     @media (max-width: 480px) {
@@ -230,6 +266,55 @@
       .header h1 {
         font-size: 1.8rem;
       }
+    }
+
+    /* Thêm style cho select box */
+    .form-select {
+      width: 100%;
+      padding: 15px 15px 15px 45px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: all 0.3s;
+      font-family: 'Montserrat', sans-serif;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    
+    .form-select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: var(--glow);
+    }
+    
+    .form-select option {
+      background: var(--medium-bg);
+      color: var(--text-light);
+      padding: 10px;
+    }
+    
+    .form-select option[data-role="admin"] {
+      color: var(--accent-color);
+      font-weight: bold;
+    }
+    
+    .select-wrapper {
+      position: relative;
+    }
+    
+    .select-wrapper::after {
+      content: '\f107';
+      font-family: 'Font Awesome 5 Free';
+      font-weight: 900;
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent-color);
+      pointer-events: none;
     }
   </style>
 </head>
@@ -243,14 +328,16 @@
     <h2 class="login-title">Đăng Nhập</h2>
     <form id="loginForm">
       <div class="form-group">
-        <label for="voter-id">Mã Cử Tri</label>
-        <div class="input-group">
+        <label for="voter-id">Chọn tài khoản</label>
+        <div class="input-group select-wrapper">
           <i class="fas fa-user"></i>
-          <input type="text" class="form-control" id="voter-id" name="voter-id" placeholder="Nhập mã cử tri của bạn">
+          <select class="form-select" id="voter-id" name="voter-id" required>
+            <option value="">Chọn tài khoản...</option>
+          </select>
         </div>
-        <div class="error-message" id="voter-id-error">Vui lòng nhập mã cử tri</div>
+        <div class="error-message" id="voter-id-error">Vui lòng chọn tài khoản</div>
       </div>
-      
+
       <div class="form-group">
         <label for="password">Mật Khẩu</label>
         <div class="input-group">
@@ -259,15 +346,16 @@
         </div>
         <div class="error-message" id="password-error">Vui lòng nhập mật khẩu</div>
       </div>
+
+      <div id="networkStatus" class="network-status"></div>
+      <div class="error-message" id="login-error" style="text-align: center; margin-top: 15px;"></div>
       
       <button type="submit" class="btn-login">Đăng Nhập</button>
-      <div class="error-message" id="login-error" style="text-align: center; margin-top: 15px;">Đăng nhập không thành công</div>
     </form>
   </div>
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
-  <script src="../js/login.js" type="module"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+  <script src="../js/login.js"></script>
 </body>
 
 </html>
