@@ -37,8 +37,7 @@ contract VotingSystem {
 
     // Các biến lưu trữ
     mapping(uint => Candidate) public candidates;
-    uint public countC
-    andidates;
+    uint public countCandidates;
 
     mapping(uint => Election) public elections;
     uint public countElections;

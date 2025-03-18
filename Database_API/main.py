@@ -48,26 +48,10 @@ except mysql.connector.Error as err:
     else:
         print(err)
 
-# Define the authentication middleware
-async def authenticate(request: Request):
-    try:
-        api_key = request.headers.get('authorization').replace("Bearer ", "")
-        cursor.execute("SELECT * FROM voters WHERE voter_id = %s", (api_key,))
-        if api_key not in [row[0] for row in cursor.fetchall()]:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Forbidden"
-            )
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Forbidden"
-        )
 
 # Define the POST endpoint for login
 @app.get("/login")
 async def login(request: Request, voter_id: str, password: str):
-    await authenticate(request)
     role = await get_role(voter_id, password)
 
     # Assuming authentication is successful, generate a token
