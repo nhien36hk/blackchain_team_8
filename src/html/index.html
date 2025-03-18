@@ -8,262 +8,362 @@
 
     <link rel="stylesheet" type="text/css" href="../css/index.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-      :root {
-        --primary-color: #2a5298;
-        --secondary-color: #198a7b;
-        --accent-color: #4d8dff;
-        --dark-bg: #1a1a2e;
-        --medium-bg: #16213e;
-        --light-bg: #0f3460;
-        --text-light: #e1e1e6;
-        --text-dim: #b8b8c3;
-        --glow: 0 0 10px rgba(77, 141, 255, 0.6);
-      }
-      
-      body {
-        font-family: 'Montserrat', sans-serif;
-        background: var(--dark-bg);
-        color: var(--text-light);
-        margin: 0;
-        padding: 0;
-        background-image: linear-gradient(135deg, var(--dark-bg) 0%, var(--medium-bg) 100%);
-        background-attachment: fixed;
-      }
-      
-      .text-center {
-        text-align: center;
-      }
-      
-      #head {
-        background: var(--medium-bg);
-        padding: 20px 0;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 30px;
-      }
-      
-      #head::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(77, 141, 255, 0.1) 0%, rgba(26, 26, 46, 0) 70%);
-        z-index: 0;
-      }
-      
-      #head h1 {
-        font-weight: 600;
-        margin: 0;
-        padding: 10px;
-        background: linear-gradient(90deg, #ffffff, #4d8dff);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        position: relative;
-        z-index: 1;
-        font-size: 2.2rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-      
-      #head h2 {
-        color: var(--text-light);
-        font-weight: 500;
-        margin: 15px 0;
-        font-size: 1.6rem;
-      }
-      
-      #head h3 {
-        color: var(--accent-color);
-        font-weight: normal;
-        font-size: 1.2rem;
-      }
-      
-      .container {
-        background: var(--medium-bg);
-        border-radius: 10px;
-        padding: 25px;
-        margin: 20px auto;
-        max-width: 900px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(77, 141, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-      }
-      
-      .container::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
-      }
-      
-      .table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        margin: 20px 0;
-      }
-      
-      .table thead tr {
-        background: rgba(255, 255, 255, 0.05);
-      }
-      
-      .table th {
-        color: var(--accent-color);
-        font-weight: 600;
-        padding: 15px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border-bottom: 2px solid rgba(77, 141, 255, 0.2);
-        font-size: 0.9rem;
-      }
-      
-      .table td {
-        padding: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s;
-      }
-      
-      .table tbody tr:hover td {
-        background: rgba(77, 141, 255, 0.05);
-      }
-      
-      input[type="radio"] {
-        accent-color: var(--accent-color);
-        width: 20px;
-        height: 20px;
-        margin-right: 10px;
-        vertical-align: middle;
-        cursor: pointer;
-      }
-      
-      #vote {
-        margin-top: 30px;
-        padding: 20px;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 8px;
-        border-left: 3px solid var(--accent-color);
-      }
-      
-      #vote p {
-        margin-bottom: 20px;
-        font-size: 1.1rem;
-      }
-      
-      .btn {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
-        border: none;
-        padding: 12px 30px;
-        font-size: 1.1rem;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: all 0.3s;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        box-shadow: 0 5px 15px rgba(25, 138, 123, 0.3);
-      }
-      
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 7px 20px rgba(25, 138, 123, 0.5);
-      }
-      
-      .btn:disabled {
-        background: #555;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-        opacity: 0.7;
-      }
-      
-      #msg {
-        margin-top: 15px;
-        padding: 10px;
-        font-weight: 500;
-        color: var(--accent-color);
-        font-size: 1.1rem;
-      }
-      
-      #accountAddress {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 15px;
-        border-radius: 5px;
-        font-family: monospace;
-        margin: 30px auto;
-        max-width: 900px;
-        word-break: break-all;
-        border-left: 3px solid var(--accent-color);
-      }
-      
-      /* Hiệu ứng cho các thẻ */
-      @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(77, 141, 255, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(77, 141, 255, 0); }
-      }
-      
-      .btn-primary {
-        animation: pulse 2s infinite;
-      }
-      
-      @media (max-width: 768px) {
-        .container {
-          padding: 15px;
-          margin: 15px;
-        }
-        
-        .table th, .table td {
-          padding: 10px;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   </head>
   <body>
-    <div id="head" class="text-center">
-      <h1 align="center">Hệ Thống Bỏ Phiếu Phi Tập Trung Trên Blockchain Ethereum</h1>
-      <h2 align="center">Chào Mừng Đến Trang Bỏ Phiếu</h2> 
-      <h3 align="center">Thời Gian Bỏ Phiếu: <span id="dates"></span></h3>
-    </div>
-    
-    <div id="account" class="container">
-      <p id="accountAddress" class="text-center"></p>
-      <div class="text-center">
-        <button id="switchAccount" class="btn">Chọn Lại Tài Khoản Metamask</button>
-      </div>
-    </div>
-    
-    <div id="candidate" class="container"> 
-      <table class="table text-center">
-        <thead>
-          <tr>
-            <th>Tên Ứng Cử Viên</th>
-            <th>Đảng Phái</th>
-            <th>Tổng Số Phiếu</th>
-          </tr>
-        </thead>
-        <tbody id="boxCandidate"></tbody>
-      </table>
+    <!-- Thêm hiệu ứng particles -->
+    <div class="particles-container">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
       
-      <div id="vote">
-        <p>Vui lòng chọn một ứng cử viên và nhấn nút bỏ phiếu.</p>
-        <button id="voteButton" class="btn btn-primary" onclick="App.vote()" disabled>Bỏ Phiếu</button>
-        <div id="msg"></div>
-        <div id="vote-box"></div>
-      </div>
+      <!-- Thêm sao băng -->
+      <div class="shooting-star"></div>
+      <div class="shooting-star"></div>
+      <div class="shooting-star"></div>
+      
+      <!-- Thêm ngôi sao nhỏ lấp lánh -->
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
+      <div class="tiny-star"></div>
     </div>
+    
+    <!-- Header cố định giống Netflix -->
+    <header class="main-header">
+      <div class="header-container">
+        <div class="logo">
+          <a href="index.html">
+            <span class="logo-text">BLOCKCHAIN<span class="accent">VOTE</span></span>
+          </a>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="index.html" class="active">Trang Chủ</a></li>
+            <li><a href="admin.html">Giới thiệu</a></li>
+            <li><a href="#" id="switchAccountNav"><i class="fas fa-exchange-alt"></i> Đổi Tài Khoản</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Banner hero kiểu Netflix -->
+    <section class="hero-banner">
+      <div class="hero-content">
+        <h1>Hệ Thống Bỏ Phiếu Phi Tập Trung</h1>
+        <h2>Trên Blockchain Ethereum</h2>
+        <div class="voting-time">
+          <i class="fas fa-vote-yea pulse-icon"></i>
+          <h3>Tham gia các cuộc bầu cử minh bạch và an toàn</h3>
+        </div>
+      </div>
+      <div class="hero-overlay"></div>
+    </section>
+    
+    <main class="main-content">
+      <!-- User Account Info -->
+      <section class="account-section">
+        <div class="content-container">
+          <div class="section-header">
+            <h2>
+              <i class="fas fa-user-circle"></i>
+              Thông Tin Tài Khoản Metamask
+            </h2>
+          </div>
+          <div class="card account-card">
+            <div class="card-content">
+              <div class="wallet-container">
+                <div class="wallet-info">
+                  <div class="wallet-label">Địa Chỉ Ví Của Bạn:</div>
+                  <p id="accountAddress" class="wallet-address"></p>
+                </div>
+                <div class="wallet-actions">
+                  <button id="switchAccount" class="btn btn-outline">
+                    <i class="fas fa-exchange-alt"></i> Chọn Lại Tài Khoản Metamask
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Elections Section (New) -->
+      <section class="elections-section">
+        <div class="content-container">
+          <div class="section-header">
+            <h2>
+              <i class="fas fa-poll"></i>
+              Danh Sách Cuộc Bầu Cử
+            </h2>
+          </div>
+          <div class="card elections-card">
+            <div class="card-content">
+              <div id="elections-loading" class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i> Đang tải danh sách cuộc bầu cử...
+              </div>
+              <div id="no-elections" class="message-box" style="display: none;">
+                <div class="message-content">
+                  <i class="fas fa-info-circle"></i>
+                  <p>Hiện tại chưa có cuộc bầu cử nào đang diễn ra. Vui lòng quay lại sau.</p>
+                </div>
+              </div>
+              <div id="elections-container" class="elections-grid">
+                <!-- Danh sách cuộc bầu cử sẽ được thêm vào đây bằng JavaScript -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Selected Election Section (New) -->
+      <section id="selected-election-section" class="selected-election-section" style="display: none;">
+        <div class="content-container">
+          <div class="section-header">
+            <h2>
+              <i class="fas fa-check-circle"></i>
+              <span id="selected-election-title">Cuộc bầu cử đang chọn</span>
+            </h2>
+            <div class="election-info">
+              <div class="election-time">
+                <i class="fas fa-calendar-alt"></i> 
+                <span id="selected-election-time">Thời gian: --/--/---- đến --/--/----</span>
+              </div>
+              <div class="election-status">
+                <i class="fas fa-info-circle"></i> 
+                <span id="selected-election-status">Trạng thái: ---</span>
+              </div>
+            </div>
+            <div class="election-description" id="selected-election-description">
+              <!-- Mô tả cuộc bầu cử -->
+            </div>
+            <button id="change-election" class="btn btn-outline btn-small">
+              <i class="fas fa-exchange-alt"></i> Chọn cuộc bầu cử khác
+            </button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Candidates Section -->
+      <section id="candidates-section" class="candidates-section" style="display: none;">
+        <div class="content-container">
+          <div class="section-header">
+            <h2>
+              <i class="fas fa-user-tie"></i>
+              Danh Sách Ứng Cử Viên
+            </h2>
+          </div>
+          <div class="card candidates-card">
+            <div class="card-content">
+              <div class="table-container">
+                <table class="table text-center">
+                  <thead>
+                    <tr>
+                      <th>Tên Ứng Cử Viên</th>
+                      <th>Đảng Phái</th>
+                      <th>Số Phiếu</th>
+                      <th>Chọn</th>
+                    </tr>
+                  </thead>
+                  <tbody id="boxCandidate"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Vote Section -->
+      <section id="vote-section" class="vote-section" style="display: none;">
+        <div class="content-container">
+          <div class="section-header">
+            <h2>
+              <i class="fas fa-vote-yea"></i>
+              Bỏ Phiếu Cho Ứng Cử Viên
+            </h2>
+          </div>
+          <div class="card vote-card">
+            <div class="card-content" id="vote">
+              <div class="vote-instruction">
+                <p>Vui lòng chọn một ứng cử viên từ danh sách và nhấn nút bỏ phiếu bên dưới.</p>
+              </div>
+              <div class="selected-candidate-info" id="selected-candidate-info" style="display: none;">
+                <div class="selected-candidate-header">Ứng cử viên đã chọn:</div>
+                <div class="selected-candidate-name" id="selected-candidate-name">Chưa chọn</div>
+                <div class="selected-candidate-party" id="selected-candidate-party"></div>
+              </div>
+              <div class="vote-action">
+                <button id="voteButton" class="btn btn-primary" disabled>
+                  <i class="fas fa-check-circle"></i> Bỏ Phiếu
+                </button>
+              </div>
+              <div id="msg" class="message-box"></div>
+              <div id="vote-box" class="vote-box"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Voting History Section (New) -->
+      <section id="history-section" class="history-section" style="display: none;">
+        <div class="content-container">
+          <div class="section-header">
+            <h2>
+              <i class="fas fa-history"></i>
+              Lịch Sử Bỏ Phiếu
+            </h2>
+          </div>
+          <div class="card history-card">
+            <div class="card-content">
+              <div id="history-loading" class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i> Đang tải lịch sử bỏ phiếu...
+              </div>
+              <div id="no-history" class="message-box" style="display: none;">
+                <div class="message-content">
+                  <i class="fas fa-info-circle"></i>
+                  <p>Bạn chưa thực hiện bỏ phiếu trong bất kỳ cuộc bầu cử nào.</p>
+                </div>
+              </div>
+              <div class="table-container" id="history-container" style="display: none;">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Thời gian</th>
+                      <th>Cuộc bầu cử</th>
+                      <th>Ứng cử viên</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-list">
+                    <!-- Lịch sử bỏ phiếu sẽ được thêm vào đây bằng JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    
+    <!-- Footer kiểu Netflix -->
+    <footer class="main-footer">
+      <div class="footer-container">
+        <div class="footer-content">
+          <div class="footer-column">
+            <h4>Giới Thiệu</h4>
+            <ul>
+              <li><a href="#">Về Chúng Tôi</a></li>
+              <li><a href="#">Công Nghệ Blockchain</a></li>
+              <li><a href="#">Tính Năng Bảo Mật</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h4>Hỗ Trợ</h4>
+            <ul>
+              <li><a href="#">Câu Hỏi Thường Gặp</a></li>
+              <li><a href="#">Hướng Dẫn Sử Dụng</a></li>
+              <li><a href="#">Liên Hệ</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h4>Pháp Lý</h4>
+            <ul>
+              <li><a href="#">Điều Khoản Sử Dụng</a></li>
+              <li><a href="#">Chính Sách Bảo Mật</a></li>
+              <li><a href="#">Quy Định Bỏ Phiếu</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h4>Kết Nối</h4>
+            <div class="social-links">
+              <a href="#"><i class="fab fa-facebook"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
+              <a href="#"><i class="fab fa-github"></i></a>
+              <a href="#"><i class="fab fa-linkedin"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Blockchain Voting System. Tất cả quyền được bảo lưu.</p>
+          <p>Powered by Ethereum Blockchain</p>
+        </div>
+      </div>
+    </footer>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
     <script src="../dist/app.bundle.js" type="module"></script>
+    <script>
+      // Thêm chức năng đồng bộ nút đổi tài khoản ở header với nút trong trang
+      document.getElementById('switchAccountNav').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('switchAccount').click();
+      });
+      
+      // Thêm chức năng chọn cuộc bầu cử khác
+      document.getElementById('change-election').addEventListener('click', function(e) {
+        e.preventDefault();
+        // Hiển thị lại danh sách cuộc bầu cử
+        document.getElementById('selected-election-section').style.display = 'none';
+        document.getElementById('candidates-section').style.display = 'none';
+        document.getElementById('vote-section').style.display = 'none';
+        document.getElementById('history-section').style.display = 'none';
+        
+        // Hiển thị phần danh sách cuộc bầu cử
+        document.querySelector('.elections-section').style.display = 'block';
+        
+        // Cuộn lên phần danh sách cuộc bầu cử
+        document.querySelector('.elections-section').scrollIntoView({behavior: 'smooth'});
+      });
+    </script>
+    
+    <!-- Script cho hiệu ứng nền và parallax -->
+    <script>
+      // Xử lý khi cuộn trang
+      window.addEventListener('scroll', function() {
+        // Header đổi màu khi cuộn
+        const header = document.querySelector('.main-header');
+        if (window.scrollY > 100) {
+          header.classList.add('scrolled');
+        } else {
+          header.classList.remove('scrolled');
+        }
+        
+        // Hiệu ứng parallax cho particles
+        const particles = document.querySelectorAll('.particle');
+        const scrollY = window.scrollY;
+        
+        particles.forEach((particle, index) => {
+          const speed = 0.05 + (index * 0.02);
+          const yPos = -scrollY * speed;
+          particle.style.transform = `translateY(${yPos}px)`;
+        });
+      });
+      
+      // Tạo hiệu ứng di chuyển theo chuột
+      document.addEventListener('mousemove', function(e) {
+        const particles = document.querySelectorAll('.particle');
+        const mouseX = e.clientX / window.innerWidth;
+        const mouseY = e.clientY / window.innerHeight;
+        
+        particles.forEach((particle, index) => {
+          const offsetX = (mouseX - 0.5) * (20 + index * 5);
+          const offsetY = (mouseY - 0.5) * (20 + index * 5);
+          
+          particle.style.marginLeft = `${offsetX}px`;
+          particle.style.marginTop = `${offsetY}px`;
+        });
+      });
+    </script>
   </body>
 </html>

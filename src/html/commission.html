@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ủy Ban Bầu Cử - Hệ Thống Bầu Cử Phi Tập Trung</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="../css/commission.css">
+    <meta name="description" content="Hệ thống bầu cử phi tập trung - Trang quản lý của Ủy ban bầu cử">
+</head>
+<body>
+    <div class="commission-background"></div>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo">
+                        <i class="fas fa-gavel"></i>
+                    </div>
+                </div>
+                <h3>Ủy Ban Bầu Cử</h3>
+                <div class="commission-badge">
+                    <i class="fas fa-certificate"></i> Ủy Ban
+                </div>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li class="active" id="proposals-menu-item">
+                    <a href="#proposalSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class="fas fa-clipboard-list"></i> Đề Xuất
+                    </a>
+                    <ul class="collapse list-unstyled" id="proposalSubmenu">
+                        <li id="pending-proposals-menu-item">
+                            <a href="#" id="pending-proposals-link" onclick="viewProposalDetails(this)">
+                                <i class="fas fa-hourglass-half"></i> Chờ Phê Duyệt <span id="pending-count" class="badge badge-warning">0</span>
+                            </a>
+                        </li>
+                        <li id="processed-proposals-menu-item">
+                            <a href="#" id="processed-proposals-link" onclick="viewProposalDetails(this)">
+                                <i class="fas fa-history"></i> Đã Xử Lý
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li id="approved-elections-menu-item">
+                    <a href="#" id="approved-elections-link" onclick="viewElectionDetails(this)">
+                        <i class="fas fa-vote-yea"></i> Cuộc Bầu Cử Đã Phê Duyệt
+                    </a>
+                </li>
+                <li id="logout-menu-item">
+                    <a href="#" id="logout-link">
+                        <i class="fas fa-sign-out-alt"></i> Đăng Xuất
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="commission-address">0x0000...0000</span>
+                </div>
+                <div class="system-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Hệ thống bầu cử phi tập trung</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-outline-primary">
+                        <i class="fas fa-align-left"></i>
+                        <span>Menu</span>
+                    </button>
+                    <div class="header-title">
+                        <h2>Hệ Thống Bầu Cử Phi Tập Trung</h2>
+                        <div class="header-subtitle">Quản lý các đề xuất và cuộc bầu cử</div>
+                    </div>
+                </div>
+            </nav>
+
+            <div id="content-area" class="container-fluid">
+                <!-- Nội dung động sẽ được thêm vào đây từ JavaScript -->
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="../dist/app.bundle.js"></script>
+    <script>
+        // Lắng nghe các sự kiện
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Kiểm tra xem CommissionController đã được định nghĩa chưa
+                if (typeof CommissionController === 'undefined') {
+                    console.error('CommissionController chưa được định nghĩa!');
+                    alert('Không thể tải controller. Vui lòng làm mới trang.');
+                    return;
+                }
+                
+                // Khởi tạo trang
+                await CommissionController.initCommissionPage();
+                
+                // Đăng ký sự kiện cho các menu
+                document.getElementById('pending-proposals-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    CommissionController.showPendingProposals();
+                });
+                
+                document.getElementById('processed-proposals-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    CommissionController.showProcessedProposals();
+                });
+                
+                document.getElementById('approved-elections-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    CommissionController.showApprovedElections();
+                });
+                
+                document.getElementById('logout-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+                        window.location.href = 'login.html';
+                    }
+                });
+                
+                // Toggle sidebar
+                document.getElementById('sidebarCollapse').addEventListener('click', () => {
+                    document.getElementById('sidebar').classList.toggle('active');
+                });
+                
+            } catch (error) {
+                console.error('Lỗi khởi tạo trang Ủy ban:', error);
+                alert('Có lỗi xảy ra khi tải trang Ủy ban bầu cử. Vui lòng thử lại sau.');
+            }
+        });
+        
+        // Thêm các hàm cần thiết vào window để có thể gọi từ HTML
+        window.viewProposalDetails = function(elem) {
+            if (elem && elem.id) {
+                if (elem.id === 'pending-proposals-link') {
+                    if (CommissionController && CommissionController.showPendingProposals) {
+                        CommissionController.showPendingProposals();
+                    }
+                } else if (elem.id === 'processed-proposals-link') {
+                    if (CommissionController && CommissionController.showProcessedProposals) {
+                        CommissionController.showProcessedProposals();
+                    }
+                } else if (CommissionController && CommissionController.viewProposalDetails) {
+                    CommissionController.viewProposalDetails(elem);
+                }
+            } else if (typeof elem === 'string' && CommissionController && CommissionController.viewProposalDetails) {
+                CommissionController.viewProposalDetails(elem);
+            } else {
+                console.error('Tham số không hợp lệ hoặc hàm viewProposalDetails không tồn tại');
+            }
+        };
+        
+        window.viewElectionDetails = function(elem) {
+            if (elem && elem.id) {
+                if (elem.id === 'approved-elections-link') {
+                    if (CommissionController && CommissionController.showApprovedElections) {
+                        CommissionController.showApprovedElections();
+                    }
+                } else if (CommissionController && CommissionController.viewElectionDetails) {
+                    CommissionController.viewElectionDetails(elem);
+                }
+            } else if (typeof elem === 'string' && CommissionController && CommissionController.viewElectionDetails) {
+                CommissionController.viewElectionDetails(elem);
+            } else {
+                console.error('Tham số không hợp lệ hoặc hàm viewElectionDetails không tồn tại');
+            }
+        };
+        
+        window.approveProposal = function(proposalId) {
+            if (CommissionController && CommissionController.approveProposal) {
+                CommissionController.approveProposal(proposalId);
+            } else {
+                console.error('Hàm approveProposal không tồn tại');
+            }
+        };
+        
+        window.rejectProposal = function() {
+            if (CommissionController && CommissionController.rejectProposal) {
+                CommissionController.rejectProposal();
+            } else {
+                console.error('Hàm rejectProposal không tồn tại');
+            }
+        };
+        
+        window.showRejectDialog = function() {
+            if (CommissionController && CommissionController.showRejectDialog) {
+                CommissionController.showRejectDialog();
+            } else {
+                console.error('Hàm showRejectDialog không tồn tại');
+            }
+        };
+        
+        window.closeRejectDialog = function() {
+            if (CommissionController && CommissionController.closeRejectDialog) {
+                CommissionController.closeRejectDialog();
+            } else {
+                console.error('Hàm closeRejectDialog không tồn tại');
+            }
+        };
+        
+        window.goBack = function() {
+            if (CommissionController && CommissionController.goBack) {
+                CommissionController.goBack();
+            } else {
+                console.error('Hàm goBack không tồn tại');
+            }
+        };
+    </script>
+</body>
+</html> 

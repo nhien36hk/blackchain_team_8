@@ -28,16 +28,16 @@ function validateInputs() {
   passwordError.style.display = 'none';
   loginError.style.display = 'none';
   
-  // Kiểm tra mã cử tri
+  // Kiểm tra mã cử tri có để trống không
   if (!voterIdInput.value.trim()) {
     voterIdError.style.display = 'block';
     voterIdInput.style.borderColor = '#ff5c5c';
     isValid = false;
-  } else {
+  } else { // Trường hợp không trống về màu mặc định
     voterIdInput.style.borderColor = 'rgba(255, 255, 255, 0.1)';
   }
   
-  // Kiểm tra mật khẩu
+  // Kiểm tra mật khẩu có để trống
   if (!passwordInput.value.trim()) {
     passwordError.style.display = 'block';
     passwordInput.style.borderColor = '#ff5c5c';
@@ -74,8 +74,9 @@ document.head.appendChild(style);
 loginForm.addEventListener('submit', (event) => {
   event.preventDefault();
   
-  // Kiểm tra đầu vào
+  // Validate tài khoản mâht khẩu
   if (!validateInputs()) {
+    // Thêm hiệu ứng rung
     shakeElement(document.querySelector('.login-container'));
     return;
   }
@@ -92,6 +93,7 @@ loginForm.addEventListener('submit', (event) => {
     'Authorization': `Bearer ${token}`,
   };
 
+  // Gửi FAST API để đăng nhập
   fetch(`http://127.0.0.1:8000/login?voter_id=${voter_id}&password=${password}`, { headers })
   .then(response => {
     if (response.ok) {

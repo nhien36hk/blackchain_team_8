@@ -7,21 +7,25 @@ require('dotenv').config();
 const app = express();
 
 
-// Authorization middleware
+// Middleware để xác thực người dùng
 const authorizeUser = (req, res, next) => {
+  // Lấy token từ header Authorization
   const token = req.query.Authorization?.split('Bearer ')[1];
 
+  // Nếu không có token, trả về lỗi 401 và thông báo cần đăng nhập
   if (!token) {
     return res.status(401).send('<h1 align="center"> Login to Continue </h1>');
   }
   
   try {
-    // Verify and decode the token
+    // Xác thực và giải mã token
     const decodedToken = jwt.verify(token, process.env.SECRET_KEY, { algorithms: ['HS256'] });
 
+    // Gán người dùng đã giải mã vào req.user để sử dụng sau này
     req.user = decodedToken;
-    next(); // Proceed to the next middleware
+    next(); // Tiếp tục đến middleware tiếp theo
   } catch (error) {
+    // Nếu có lỗi trong quá trình xác thực token, trả về lỗi 401 và thông báo token không hợp lệ
     return res.status(401).json({ message: 'Invalid authorization token' });
   }
 };
@@ -83,6 +87,21 @@ app.get('/test.html', (req, res) => {
 // Thêm route để phục vụ file test.js
 app.get('/js/test.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'src/js/test.js'));
+});
+
+// Thêm route cho trang Ủy ban bầu cử (Commission)
+app.get('/commission.html', authorizeUser, (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/html/commission.html'));
+});
+
+// Route cho CSS của trang Commission
+app.get('/css/commission.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/css/commission.css'));
+});
+
+// Route cho controller của Commission
+app.get('/js/controllers/commission-controller.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/js/controllers/commission-controller.js'));
 });
 
 // Start the server

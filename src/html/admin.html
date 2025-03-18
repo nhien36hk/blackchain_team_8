@@ -1,737 +1,949 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Trang Quản Trị</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-      :root {
-        --primary-color: #2a5298;
-        --secondary-color: #198a7b;
-        --accent-color: #4d8dff;
-        --dark-bg: #1a1a2e;
-        --medium-bg: #16213e;
-        --light-bg: #0f3460;
-        --text-light: #e1e1e6;
-        --text-dim: #b8b8c3;
-        --glow: 0 0 10px rgba(77, 141, 255, 0.6);
-        --success-color: #4CAF50;
-        --warning-color: #ff9800;
-        --error-color: #f44336;
-      }
-      
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: 'Montserrat', sans-serif;
-        background: var(--dark-bg);
-        color: var(--text-light);
-        margin: 0;
-        padding: 0;
-        background-image: linear-gradient(135deg, var(--dark-bg) 0%, var(--medium-bg) 100%);
-        background-attachment: fixed;
-        min-height: 100vh;
-      }
-      
-      .text-center {
-        text-align: center;
-      }
-      
-      /* Header */
-      .header {
-        background: var(--medium-bg);
-        padding: 20px 0;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 30px;
-      }
-      
-      .header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(77, 141, 255, 0.1) 0%, rgba(26, 26, 46, 0) 70%);
-        z-index: 0;
-      }
-      
-      .header h1 {
-        font-weight: 600;
-        margin: 0;
-        padding: 10px;
-        background: linear-gradient(90deg, #ffffff, #4d8dff);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        position: relative;
-        z-index: 1;
-        font-size: 2.2rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-      
-      /* Sidebar */
-      .admin-container {
-        display: flex;
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 20px;
-      }
-      
-      .sidebar {
-        width: 280px;
-        background: var(--medium-bg);
-        border-radius: 10px;
-        padding: 25px;
-        margin-right: 30px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(77, 141, 255, 0.1);
-        position: sticky;
-        top: 30px;
-        height: calc(100vh - 150px);
-        overflow-y: auto;
-      }
-      
-      .sidebar-header {
-        margin-bottom: 30px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      
-      .sidebar-title {
-        font-size: 1.2rem;
-        color: var(--accent-color);
-        margin-bottom: 10px;
-        font-weight: 600;
-      }
-      
-      .account-info {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 15px;
-        border-radius: 8px;
-        font-family: monospace;
-        word-break: break-all;
-        font-size: 0.85rem;
-        border-left: 3px solid var(--accent-color);
-      }
-      
-      .nav-menu {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      
-      .nav-item {
-        margin-bottom: 10px;
-      }
-      
-      .nav-link {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        border-radius: 8px;
-        color: var(--text-light);
-        text-decoration: none;
-        transition: all 0.3s;
-        font-weight: 500;
-      }
-      
-      .nav-link:hover, .nav-link.active {
-        background: rgba(77, 141, 255, 0.1);
-        color: var(--accent-color);
-      }
-      
-      .nav-link i {
-        margin-right: 10px;
-        font-size: 1.2rem;
-        color: var(--accent-color);
-        width: 24px;
-        text-align: center;
-      }
-      
-      .btn-account {
-        width: 100%;
-        padding: 12px;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      
-      .btn-account i {
-        margin-right: 8px;
-      }
-      
-      .btn-account:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 7px 20px rgba(25, 138, 123, 0.3);
-      }
-      
-      /* Main Content */
-      .main-content {
-        flex: 1;
-      }
-      
-      .card {
-        background: var(--medium-bg);
-        border-radius: 10px;
-        padding: 25px;
-        margin-bottom: 30px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(77, 141, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-      }
-      
-      .card::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
-      }
-      
-      .card-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      
-      .card-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        background: rgba(77, 141, 255, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 15px;
-      }
-      
-      .card-icon i {
-        font-size: 1.5rem;
-        color: var(--accent-color);
-      }
-      
-      .card-title {
-        color: var(--accent-color);
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin: 0;
-        letter-spacing: 0.5px;
-      }
-      
-      .form-group {
-        margin-bottom: 20px;
-      }
-      
-      .form-row {
-        display: flex;
-        flex-wrap: wrap;
-        margin: 0 -10px;
-      }
-      
-      .form-col {
-        flex: 1;
-        padding: 0 10px;
-        min-width: 200px;
-      }
-      
-      .form-label {
-        display: block;
-        margin-bottom: 8px;
-        font-size: 0.9rem;
-        color: var(--text-dim);
-        font-weight: 500;
-      }
-      
-      .form-control {
-        width: 100%;
-        padding: 12px 15px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--text-light);
-        font-size: 1rem;
-        transition: all 0.3s;
-        font-family: 'Montserrat', sans-serif;
-      }
-      
-      .form-control:focus {
-        outline: none;
-        border-color: var(--accent-color);
-        box-shadow: var(--glow);
-      }
-      
-      .btn {
-        padding: 12px 25px;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-      
-      .btn i {
-        margin-right: 8px;
-      }
-      
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 7px 20px rgba(25, 138, 123, 0.3);
-      }
-      
-      .btn-block {
-        width: 100%;
-      }
-      
-      /* Status Messages */
-      .status-message {
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 15px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-      }
-      
-      /* Đảm bảo hiển thị đúng phần tử #Aday */
-      #Aday {
-        margin-top: 15px;
-        padding: 15px;
-        border-radius: 8px;
-        font-weight: 500;
-        text-align: center;
-        width: 100%;
-      }
-      
-      #Aday p {
-        margin: 0;
-        padding: 0;
-      }
-      
-      #Aday.visible {
-        display: block !important;
-      }
-      
-      .status-message i {
-        margin-right: 10px;
-        font-size: 1.2rem;
-      }
-      
-      .status-success {
-        background: rgba(76, 175, 80, 0.1);
-        color: var(--success-color);
-        border-left: 3px solid var(--success-color);
-      }
-      
-      .status-warning {
-        background: rgba(255, 152, 0, 0.1);
-        color: var(--warning-color);
-        border-left: 3px solid var(--warning-color);
-      }
-      
-      .status-error {
-        background: rgba(244, 67, 54, 0.1);
-        color: var(--error-color);
-        border-left: 3px solid var(--error-color);
-      }
-      
-      /* Stats Cards */
-      .stats-container {
-        display: flex;
-        flex-wrap: wrap;
-        margin: 0 -10px 30px;
-      }
-      
-      .stat-card {
-        flex: 1;
-        min-width: 200px;
-        background: var(--medium-bg);
-        border-radius: 10px;
-        padding: 20px;
-        margin: 0 10px 20px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(77, 141, 255, 0.1);
-        display: flex;
-        align-items: center;
-      }
-      
-      .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 10px;
-        background: rgba(77, 141, 255, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 15px;
-      }
-      
-      .stat-icon i {
-        font-size: 1.8rem;
-        color: var(--accent-color);
-      }
-      
-      .stat-info {
-        flex: 1;
-      }
-      
-      .stat-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-      }
-      
-      .stat-label {
-        font-size: 0.9rem;
-        color: var(--text-dim);
-      }
-      
-      /* Responsive */
-      @media (max-width: 992px) {
-        .admin-container {
-          flex-direction: column;
-        }
-        
-        .sidebar {
-          width: 100%;
-          margin-right: 0;
-          margin-bottom: 30px;
-          height: auto;
-          position: static;
-        }
-        
-        .nav-menu {
-          display: flex;
-          flex-wrap: wrap;
-        }
-        
-        .nav-item {
-          margin-right: 10px;
-        }
-      }
-      
-      @media (max-width: 768px) {
-        .form-row {
-          flex-direction: column;
-        }
-        
-        .form-col {
-          margin-bottom: 15px;
-        }
-        
-        .stats-container {
-          flex-direction: column;
-        }
-        
-        .stat-card {
-          width: calc(100% - 20px);
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="header text-center">
-      <h1>Hệ Thống Bỏ Phiếu Phi Tập Trung Trên Blockchain Ethereum</h1>
-    </div>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trang Quản Trị</title>
 
-    <div class="admin-container">
-      <!-- Sidebar -->
-      <div class="sidebar">
-        <div class="sidebar-header">
-          <div class="sidebar-title">Thông Tin Tài Khoản</div>
-          <div class="account-info" id="accountAddress"></div>
-          <button id="switchAccount" class="btn-account">
-            <i class="fas fa-exchange-alt"></i> Chọn Lại Tài Khoản
-          </button>
-        </div>
-        
-        <ul class="nav-menu">
-          <li class="nav-item">
-            <a href="#" class="nav-link active" data-section="dashboard">
-              <i class="fas fa-tachometer-alt"></i> Tổng Quan
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link" data-section="candidates">
-              <i class="fas fa-user-tie"></i> Quản Lý Ứng Cử Viên
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link" data-section="voting-dates">
-              <i class="fas fa-calendar-alt"></i> Thiết Lập Thời Gian
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link" data-section="results">
-              <i class="fas fa-chart-bar"></i> Kết Quả Bỏ Phiếu
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="index.html" class="nav-link">
-              <i class="fas fa-vote-yea"></i> Trang Bỏ Phiếu
-            </a>
-          </li>
+  <link rel="stylesheet" type="text/css" href="../css/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+  <!-- Thêm badge admin -->
+  <div class="admin-badge">
+    <i class="fas fa-user-shield"></i> Admin
+  </div>
+
+  <!-- Thêm lưới nền -->
+  <div class="grid-background"></div>
+  
+  <!-- Thêm hiệu ứng particles -->
+  <div class="particles-container">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <!-- Thêm sao băng -->
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+
+    <!-- Thêm ngôi sao nhỏ lấp lánh -->
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+    <div class="tiny-star"></div>
+  </div>
+
+  <!-- Header cố định giống Netflix -->
+  <header class="main-header">
+    <div class="header-container">
+      <div class="logo">
+        <a href="index.html">
+          <span class="logo-text">BLOCKCHAIN<span class="accent">VOTE</span></span>
+        </a>
+      </div>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="admin.html" class="active">Quản Trị</a></li>
+          <li><a href="#" id="switchAccountNav"><i class="fas fa-exchange-alt"></i> Đổi Tài Khoản</a></li>
         </ul>
-      </div>
-      
-      <!-- Main Content -->
-      <div class="main-content">
-        <!-- Dashboard Section -->
-        <div class="content-section" id="dashboard-section">
-          <div class="stats-container">
-            <div class="stat-card">
-              <div class="stat-icon">
-                <i class="fas fa-users"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value" id="totalCandidates">0</div>
-                <div class="stat-label">Tổng Số Ứng Cử Viên</div>
-              </div>
-            </div>
-            
-            <div class="stat-card">
-              <div class="stat-icon">
-                <i class="fas fa-vote-yea"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value" id="totalVotes">0</div>
-                <div class="stat-label">Tổng Số Phiếu Bầu</div>
-              </div>
-            </div>
-            
-            <div class="stat-card">
-              <div class="stat-icon">
-                <i class="fas fa-clock"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value" id="votingStatus">Chưa Bắt Đầu</div>
-                <div class="stat-label">Trạng Thái Bỏ Phiếu</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-info-circle"></i>
-              </div>
-              <h2 class="card-title">Thông Tin Cuộc Bỏ Phiếu</h2>
-            </div>
-            
-            <div class="voting-info">
-              <p><strong>Thời Gian Bỏ Phiếu:</strong> <span id="votingDates">Chưa thiết lập</span></p>
-              <p><strong>Địa Chỉ Hợp Đồng:</strong> <span id="contractAddress">Đang tải...</span></p>
-              <p><strong>Trạng Thái Hiện Tại:</strong> <span id="currentStatus">Đang tải...</span></p>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Candidates Section -->
-        <div class="content-section" id="candidates-section" style="display: none;">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-user-plus"></i>
-              </div>
-              <h2 class="card-title">Thêm Ứng Cử Viên</h2>
-            </div>
-            
-            <form id="addCandidateForm">
-              <div class="form-row">
-                <div class="form-col">
-                  <div class="form-group">
-                    <label class="form-label" for="name">Họ và tên</label>
-                    <input id="name" type="text" class="form-control" name="name" placeholder="Nhập tên ứng cử viên" autocomplete="off">
-                  </div>
-                </div>
-                
-                <div class="form-col">
-                  <div class="form-group">
-                    <label class="form-label" for="party">Đảng phái</label>
-                    <input id="party" type="text" class="form-control" name="party" placeholder="Nhập đảng phái ứng cử viên">
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <button type="button" id="addCandidate" class="btn">
-                  <i class="fas fa-plus-circle"></i> Thêm Ứng Cử Viên
-                </button>
-              </div>
-              
-              <div id="Aday" class="status-message" style="display: none;"></div>
-            </form>
-          </div>
-          
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-list"></i>
-              </div>
-              <h2 class="card-title">Danh Sách Ứng Cử Viên</h2>
-            </div>
-            
-            <div class="candidate-list" id="candidateList">
-              <p class="text-center">Đang tải danh sách ứng cử viên...</p>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Voting Dates Section -->
-        <div class="content-section" id="voting-dates-section" style="display: none;">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-calendar-alt"></i>
-              </div>
-              <h2 class="card-title">Thiết Lập Thời Gian Bỏ Phiếu</h2>
-            </div>
-            
-            <form id="setDatesForm">
-              <div class="form-row">
-                <div class="form-col">
-                  <div class="form-group">
-                    <label class="form-label" for="startDate">Ngày bắt đầu</label>
-                    <input id="startDate" type="date" class="form-control" name="startDate">
-                  </div>
-                </div>
-                
-                <div class="form-col">
-                  <div class="form-group">
-                    <label class="form-label" for="endDate">Ngày kết thúc</label>
-                    <input id="endDate" type="date" class="form-control" name="endDate">
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <button type="button" id="addDate" class="btn">
-                  <i class="fas fa-save"></i> Thiết Lập Thời Gian
-                </button>
-              </div>
-              
-              <div id="dates" class="status-message" style="display: none;"></div>
-            </form>
-          </div>
-          
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-info-circle"></i>
-              </div>
-              <h2 class="card-title">Thông Tin Thời Gian Hiện Tại</h2>
-            </div>
-            
-            <div class="current-dates">
-              <p><strong>Thời Gian Bỏ Phiếu Hiện Tại:</strong> <span id="currentDates">Chưa thiết lập</span></p>
-              <p><strong>Trạng Thái:</strong> <span id="datesStatus">Chưa thiết lập</span></p>
-            </div>
-          </div>
+      </nav>
     </div>
+  </header>
 
-        <!-- Results Section -->
-        <div class="content-section" id="results-section" style="display: none;">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-chart-bar"></i>
+  <!-- Banner hero kiểu Netflix -->
+  <section class="hero-banner">
+    <div class="hero-content">
+      <h1>Trang Quản Trị Hệ Thống</h1>
+      <h2>Quản Lý Hệ Thống Bầu Cử Phi Tập Trung</h2>
+      <div class="voting-time">
+        <i class="fas fa-clock pulse-icon"></i>
+        <h3>Tạo và quản lý nhiều cuộc bầu cử cùng lúc</h3>
+      </div>
+    </div>
+    <div class="hero-overlay"></div>
+  </section>
+
+  <main class="main-content">
+    <!-- User Account Info -->
+    <section class="account-section">
+      <div class="content-container">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-user-shield"></i>
+            Thông Tin Tài Khoản Admin
+          </h2>
+        </div>
+        <div class="card account-card">
+          <div class="card-content">
+            <div class="wallet-container">
+              <div class="wallet-info">
+                <div class="wallet-label">Địa Chỉ Ví Của Bạn:</div>
+                <p id="accountAddress" class="wallet-address"></p>
               </div>
-              <h2 class="card-title">Kết Quả Bỏ Phiếu</h2>
-            </div>
-
-            <div class="results-container" id="resultsContainer">
-              <p class="text-center">Đang tải kết quả bỏ phiếu...</p>
+              <div class="wallet-actions">
+                <button id="switchAccount" class="btn btn-outline">
+                  <i class="fas fa-exchange-alt"></i> Chọn Lại Tài Khoản Metamask
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <!-- Admin Navigation Section -->
+    <section class="admin-nav-section">
+      <div class="content-container">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-th-large"></i>
+            Quản Lý Hệ Thống
+          </h2>
+        </div>
+        <div class="card nav-card">
+          <div class="card-content">
+            <div class="admin-nav-container">
+              <div class="admin-nav-item" data-section="candidates-section">
+                <div class="admin-nav-icon">
+                  <i class="fas fa-user-tie"></i>
+                </div>
+                <h3>Quản Lý Ứng Viên</h3>
+                <p>Thêm và quản lý ứng cử viên tham gia bỏ phiếu</p>
+              </div>
+              <div class="admin-nav-item" data-section="proposals-section">
+                <div class="admin-nav-icon">
+                  <i class="fas fa-file-alt"></i>
+                </div>
+                <h3>Đề Xuất Bầu Cử</h3>
+                <p>Tạo và quản lý đề xuất cuộc bầu cử mới</p>
+              </div>
+              <div class="admin-nav-item" data-section="voters-section">
+                <div class="admin-nav-icon">
+                  <i class="fas fa-users"></i>
+                </div>
+                <h3>Quản Lý Cử Tri</h3>
+                <p>Theo dõi danh sách và trạng thái của cử tri</p>
+              </div>
+              <div class="admin-nav-item" data-section="voting-dates-section">
+                <div class="admin-nav-icon">
+                  <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3>Thời Gian Bỏ Phiếu</h3>
+                <p>Thiết lập thời gian bắt đầu và kết thúc bỏ phiếu</p>
+              </div>
+              <div class="admin-nav-item" data-section="results-section">
+                <div class="admin-nav-icon">
+                  <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3>Kết Quả Bỏ Phiếu</h3>
+                <p>Xem và công bố kết quả cuộc bỏ phiếu</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Candidates Section -->
+    <section class="content-section" id="candidates-section">
+      <div class="content-container">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-user-tie"></i>
+            Quản Lý Ứng Viên
+          </h2>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <h2 class="card-title">Thêm Ứng Cử Viên</h2>
+          </div>
+
+          <form id="addCandidateForm">
+            <div class="form-row">
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="name">Họ và tên</label>
+                  <input id="name" type="text" class="form-control" name="name" placeholder="Nhập tên ứng cử viên"
+                    autocomplete="off">
+                </div>
+              </div>
+
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="party">Đảng phái</label>
+                  <input id="party" type="text" class="form-control" name="party"
+                    placeholder="Nhập đảng phái ứng cử viên">
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <button type="button" id="addCandidate" class="btn">
+                <i class="fas fa-plus-circle"></i> Thêm Ứng Cử Viên
+              </button>
+            </div>
+
+            <div id="Aday" class="status-message" style="display: none;"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-list"></i>
+            </div>
+            <h2 class="card-title">Danh Sách Ứng Cử Viên</h2>
+          </div>
+
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tên Ứng Cử Viên</th>
+                  <th>Đảng Phái</th>
+                  <th>Số Phiếu</th>
+                  <th>Hành Động</th>
+                </tr>
+              </thead>
+              <tbody id="candidate-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Proposals Section - New -->
+    <section class="content-section" id="proposals-section" style="display: none;">
+      <div class="content-container">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-file-alt"></i>
+            Đề Xuất Cuộc Bầu Cử
+          </h2>
+        </div>
+        
+        <!-- Create Proposal Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <h2 class="card-title">Tạo Đề Xuất Cuộc Bầu Cử Mới</h2>
+          </div>
+
+          <form id="createProposalForm">
+            <div class="form-row">
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="proposal-title">Tiêu đề cuộc bầu cử</label>
+                  <input id="proposal-title" type="text" class="form-control" name="proposal-title" 
+                    placeholder="Nhập tiêu đề cuộc bầu cử" autocomplete="off">
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="proposal-description">Mô tả</label>
+                  <textarea id="proposal-description" class="form-control" name="proposal-description" 
+                    placeholder="Mô tả chi tiết về cuộc bầu cử" rows="4"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="proposal-start-date">Thời gian bắt đầu</label>
+                  <input id="proposal-start-date" type="datetime-local" class="form-control" name="proposal-start-date">
+                </div>
+              </div>
+
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="proposal-end-date">Thời gian kết thúc</label>
+                  <input id="proposal-end-date" type="datetime-local" class="form-control" name="proposal-end-date">
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <button type="button" id="createProposal" class="btn">
+                <i class="fas fa-paper-plane"></i> Gửi Đề Xuất
+              </button>
+            </div>
+
+            <div id="proposalStatus" class="status-message" style="display: none;"></div>
+          </form>
+        </div>
+
+        <!-- Proposals List Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-list"></i>
+            </div>
+            <h2 class="card-title">Danh Sách Đề Xuất</h2>
+          </div>
+
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tiêu đề</th>
+                  <th>Thời gian bầu cử</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="proposal-list">
+                <!-- Danh sách đề xuất sẽ được thêm vào đây bằng JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Voters Section -->
+    <section class="content-section" id="voters-section" style="display: none;">
+      <div class="content-container">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-users"></i>
+            Quản Lý Cử Tri
+          </h2>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <h2 class="card-title">Thêm Cử Tri</h2>
+          </div>
+
+          <form id="addVoterForm">
+            <div class="form-row">
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="voter-address">Địa Chỉ Ví</label>
+                  <input id="voter-address" type="text" class="form-control" name="voter-address"
+                    placeholder="Nhập địa chỉ ví của cử tri" autocomplete="off">
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <button type="button" class="btn" onclick="App.registerVoter()">
+                <i class="fas fa-user-plus"></i> Đăng Ký Cử Tri
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-list"></i>
+            </div>
+            <h2 class="card-title">Danh Sách Cử Tri</h2>
+          </div>
+
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Địa Chỉ</th>
+                  <th>Trạng Thái</th>
+                  <th>Đã Bỏ Phiếu</th>
+                </tr>
+              </thead>
+              <tbody id="voter-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Voting Dates Section -->
+    <section class="content-section" id="voting-dates-section" style="display: none;">
+      <div class="content-container">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-calendar-alt"></i>
+            Thời Gian Bỏ Phiếu
+          </h2>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <h2 class="card-title">Thiết Lập Thời Gian</h2>
+          </div>
+
+          <form id="setDatesForm">
+            <div class="form-row">
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="startDate">Thời Gian Bắt Đầu</label>
+                  <input id="startDate" type="datetime-local" class="form-control" name="startDate">
+                </div>
+              </div>
+
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="endDate">Thời Gian Kết Thúc</label>
+                  <input id="endDate" type="datetime-local" class="form-control" name="endDate">
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <button type="button" id="addDate" class="btn">
+                <i class="fas fa-save"></i> Lưu Thời Gian
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <h2 class="card-title">Kiểm Soát Cuộc Bỏ Phiếu</h2>
+          </div>
+
+          <div class="card-content">
+            <div class="control-actions">
+              <button type="button" class="btn btn-success" onclick="App.startElection()">
+                <i class="fas fa-play"></i> Bắt Đầu
+              </button>
+              <button type="button" class="btn btn-danger" onclick="App.endElection()">
+                <i class="fas fa-stop"></i> Kết Thúc
+              </button>
+              <button type="button" class="btn btn-warning" onclick="App.resetElection()">
+                <i class="fas fa-redo"></i> Đặt Lại
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="content-section" id="results-section" style="display: none;">
+      <div class="content-container">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-chart-bar"></i>
+            Kết Quả Bầu Cử
+          </h2>
+        </div>
+        
+        <!-- Election Selection Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-list-alt"></i>
+            </div>
+            <h2 class="card-title">Chọn Cuộc Bầu Cử</h2>
+          </div>
+
+          <div class="card-content">
+            <div class="form-row">
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label" for="election-select">Cuộc bầu cử</label>
+                  <select id="election-select" class="form-control">
+                    <option value="" selected disabled>-- Chọn cuộc bầu cử --</option>
+                    <!-- Danh sách cuộc bầu cử sẽ được thêm vào đây bằng JavaScript -->
+                  </select>
+                </div>
+              </div>
+              <div class="form-col">
+                <div class="form-group">
+                  <button type="button" id="load-election-results" class="btn btn-outline" style="margin-top: 32px;">
+                    <i class="fas fa-sync-alt"></i> Tải Kết Quả
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Results Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-poll"></i>
+            </div>
+            <h2 class="card-title">Kết Quả Hiện Tại <span id="election-title"></span> <span class="live-badge">ĐANG THEO DÕI</span></h2>
+          </div>
+
+          <div class="card-content">
+            <div class="results-controls">
+              <button type="button" id="refreshResults" class="btn btn-outline">
+                <i class="fas fa-sync-alt"></i> Cập Nhật Kết Quả
+              </button>
+              <div class="auto-refresh-control">
+                <label class="switch">
+                  <input type="checkbox" id="autoRefreshToggle" checked>
+                  <span class="slider round"></span>
+                </label>
+                <span>Tự động cập nhật (30s)</span>
+                <div id="refreshTimer" class="refresh-timer">30</div>
+              </div>
+              <div class="last-update">
+                Cập nhật lần cuối: <span id="lastUpdateTime">--:--:--</span>
+              </div>
+            </div>
+
+            <div class="results-stats">
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-value" id="totalVotersCount">0</div>
+                <div class="stat-label">Tổng cử tri</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-vote-yea"></i></div>
+                <div class="stat-value" id="totalVotesCount">0</div>
+                <div class="stat-label">Đã bỏ phiếu</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                <div class="stat-value" id="voterTurnout">0%</div>
+                <div class="stat-label">Tỉ lệ tham gia</div>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Xếp Hạng</th>
+                    <th>Tên Ứng Viên</th>
+                    <th>Đảng Phái</th>
+                    <th>Số Phiếu</th>
+                    <th>Tỷ Lệ (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="results-list"></tbody>
+              </table>
+            </div>
+
+            <div class="results-chart">
+              <div id="votesChart" class="chart-container">
+                <!-- Chart sẽ được render bằng JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-history"></i>
+            </div>
+            <h2 class="card-title">Lịch Sử Bỏ Phiếu Gần Đây</h2>
+          </div>
+
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Địa Chỉ Cử Tri</th>
+                  <th>Ứng Viên</th>
+                </tr>
+              </thead>
+              <tbody id="recent-votes"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-bullhorn"></i>
+            </div>
+            <h2 class="card-title">Công Bố Kết Quả</h2>
+          </div>
+
+          <div class="card-content">
+            <div class="notice-message">
+              <i class="fas fa-info-circle"></i>
+              <p>Lưu ý: Kết quả chính thức chỉ nên được công bố sau khi cuộc bỏ phiếu đã kết thúc.</p>
+            </div>
+            <div class="text-center">
+              <button type="button" id="finalizeElection" class="btn btn-primary">
+                <i class="fas fa-check-circle"></i> Kết Thúc Cuộc Bầu Cử
+              </button>
+              <button type="button" id="publishResults" class="btn btn-primary">
+                <i class="fas fa-bullhorn"></i> Công Bố Kết Quả Chính Thức
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer kiểu Netflix -->
+  <footer class="main-footer">
+    <div class="footer-container">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h4>Giới Thiệu</h4>
+          <ul>
+            <li><a href="#">Về Chúng Tôi</a></li>
+            <li><a href="#">Công Nghệ Blockchain</a></li>
+            <li><a href="#">Tính Năng Bảo Mật</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Hỗ Trợ</h4>
+          <ul>
+            <li><a href="#">Câu Hỏi Thường Gặp</a></li>
+            <li><a href="#">Hướng Dẫn Sử Dụng</a></li>
+            <li><a href="#">Liên Hệ</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Pháp Lý</h4>
+          <ul>
+            <li><a href="#">Điều Khoản Sử Dụng</a></li>
+            <li><a href="#">Chính Sách Bảo Mật</a></li>
+            <li><a href="#">Quy Định Bỏ Phiếu</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Kết Nối</h4>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-linkedin"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Blockchain Voting System. Tất cả quyền được bảo lưu.</p>
+        <p>Powered by Ethereum Blockchain</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
   <script src="../dist/app.bundle.js" type="module"></script>
-    <script>
-      // Navigation
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-          if (this.getAttribute('href') === '#') {
-            e.preventDefault();
-            
-            // Remove active class from all links
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            
-            // Add active class to clicked link
-            this.classList.add('active');
-            
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(section => {
-              section.style.display = 'none';
-            });
-            
-            // Show selected section
-            const sectionId = this.getAttribute('data-section') + '-section';
-            document.getElementById(sectionId).style.display = 'block';
-          }
-        });
+  <script>
+    // Thêm chức năng đồng bộ nút đổi tài khoản ở header với nút trong trang
+    document.getElementById('switchAccountNav').addEventListener('click', function (e) {
+      e.preventDefault();
+      document.getElementById('switchAccount').click();
+    });
+
+    // Thêm chức năng chuyển tab admin
+    $(document).ready(function () {
+      $('.admin-nav-item').click(function () {
+        var targetSection = $(this).data('section');
+
+        // Ẩn tất cả section
+        $('.content-section').hide();
+
+        // Hiển thị section được chọn
+        $('#' + targetSection).show();
+
+        // Thêm hiệu ứng active cho nav item
+        $('.admin-nav-item').removeClass('active');
+        $(this).addClass('active');
+        
+        // Nếu chuyển đến tab kết quả, kích hoạt tải dữ liệu blockchain
+        if (targetSection === 'results-section' && window.App) {
+          console.log("Đang tải lại dữ liệu cho tab kết quả bỏ phiếu...");
+          
+          // Đảm bảo rằng hàm được gọi sau khi DOM đã sẵn sàng
+          setTimeout(() => {
+            // Kích hoạt tự động cập nhật
+            if ($('#refreshResults').length) {
+              $('#refreshResults').click();
+            }
+          }, 100);
+        }
       });
       
-      // Format status messages
-      function showStatusMessage(elementId, message, type) {
-        const element = document.getElementById(elementId);
-        element.className = 'status-message';
-        element.classList.add('status-' + type);
+      // Mặc định chọn tab ứng cử viên khi trang được tải
+      $('.content-section').hide();
+      $('#candidates-section').show();
+      $('.admin-nav-item[data-section="candidates-section"]').addClass('active');
+    });
+  </script>
+
+  <!-- Script cho hiệu ứng nền và parallax -->
+  <script>
+    // Xử lý khi cuộn trang
+    window.addEventListener('scroll', function () {
+      // Header đổi màu khi cuộn
+      const header = document.querySelector('.main-header');
+      if (window.scrollY > 100) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+
+      // Hiệu ứng parallax cho particles
+      const particles = document.querySelectorAll('.particle');
+      const scrollY = window.scrollY;
+
+      particles.forEach((particle, index) => {
+        const speed = 0.05 + (index * 0.02);
+        const yPos = -scrollY * speed;
+        particle.style.transform = `translateY(${yPos}px)`;
+      });
+    });
+
+    // Tạo hiệu ứng di chuyển theo chuột
+    document.addEventListener('mousemove', function (e) {
+      const particles = document.querySelectorAll('.particle');
+      const mouseX = e.clientX / window.innerWidth;
+      const mouseY = e.clientY / window.innerHeight;
+
+      particles.forEach((particle, index) => {
+        const offsetX = (mouseX - 0.5) * (20 + index * 5);
+        const offsetY = (mouseY - 0.5) * (20 + index * 5);
+
+        particle.style.marginLeft = `${offsetX}px`;
+        particle.style.marginTop = `${offsetY}px`;
+      });
+    });
+  </script>
+
+  <!-- Script cho kết quả bỏ phiếu theo thời gian thực -->
+  <script>
+    $(document).ready(function() {
+      // Biến lưu trữ kết quả hiện tại
+      let currentResults = [];
+      let totalVoters = 0;
+      let totalVotes = 0;
+      let refreshInterval;
+      let countdown = 30;
+      
+      // Hàm cập nhật thời gian hiện tại
+      function updateLastUpdateTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        $('#lastUpdateTime').text(`${hours}:${minutes}:${seconds}`);
+      }
+      
+      // Hàm tạo và cập nhật biểu đồ
+      function updateResultsChart() {
+        const votesChart = $('#votesChart');
+        votesChart.empty();
         
-        let icon = '';
-        switch(type) {
-          case 'success':
-            icon = '<i class="fas fa-check-circle"></i>';
-            break;
-          case 'warning':
-            icon = '<i class="fas fa-exclamation-triangle"></i>';
-            break;
-          case 'error':
-            icon = '<i class="fas fa-times-circle"></i>';
-            break;
+        // Sắp xếp kết quả từ cao đến thấp
+        currentResults.sort((a, b) => b.votes - a.votes);
+        
+        // Tìm giá trị cao nhất để tính tỷ lệ
+        const maxVotes = currentResults.length > 0 ? currentResults[0].votes : 0;
+        
+        // Tạo thanh biểu đồ cho mỗi ứng viên
+        currentResults.forEach(candidate => {
+          const percentage = maxVotes > 0 ? (candidate.votes / maxVotes * 100) : 0;
+          const chartBar = $(`
+            <div class="chart-item">
+              <div class="chart-bar" style="width: ${percentage}%">
+                <span class="chart-label">${candidate.name}</span>
+                <span class="chart-value">${candidate.votes} phiếu</span>
+              </div>
+            </div>
+          `);
+          votesChart.append(chartBar);
+        });
+      }
+      
+      // Hàm cập nhật danh sách kết quả
+      function updateResultsList() {
+        const resultsList = $('#results-list');
+        resultsList.empty();
+        
+        // Sắp xếp kết quả từ cao đến thấp
+        currentResults.sort((a, b) => b.votes - a.votes);
+        
+        // Tính tổng số phiếu
+        const totalVotesCast = currentResults.reduce((sum, candidate) => sum + candidate.votes, 0);
+        
+        // Tạo hàng cho mỗi ứng viên
+        currentResults.forEach((candidate, index) => {
+          const percentage = totalVotesCast > 0 ? ((candidate.votes / totalVotesCast) * 100).toFixed(2) : '0.00';
+          const row = $(`
+            <tr class="${index === 0 ? 'leading-candidate' : ''}">
+              <td>${index + 1}</td>
+              <td>${candidate.name}</td>
+              <td>${candidate.party}</td>
+              <td>${candidate.votes}</td>
+              <td>${percentage}%</td>
+            </tr>
+          `);
+          resultsList.append(row);
+        });
+      }
+      
+      // Hàm cập nhật thống kê
+      function updateStats() {
+        const totalVotesCast = currentResults.reduce((sum, candidate) => sum + candidate.votes, 0);
+        $('#totalVotersCount').text(totalVoters);
+        $('#totalVotesCount').text(totalVotesCast);
+        
+        const turnout = totalVoters > 0 ? ((totalVotesCast / totalVoters) * 100).toFixed(2) : '0.00';
+        $('#voterTurnout').text(`${turnout}%`);
+      }
+      
+      // Hàm lấy kết quả bỏ phiếu hiện tại
+      function fetchCurrentResults() {
+        // Hiển thị thông báo đang tải
+        $('#results-list').html('<tr><td colspan="5" class="text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu từ blockchain...</td></tr>');
+        
+        // Kiểm tra và sử dụng App để lấy dữ liệu từ blockchain
+        if (!window.App) {
+          console.error('Không tìm thấy App object. Kiểm tra lại file app-init.js đã được tải');
+          $('#results-list').html('<tr><td colspan="5" class="text-center"><i class="fas fa-exclamation-triangle"></i> Không thể kết nối đến blockchain</td></tr>');
+          return;
+        }
+          
+        // Lấy danh sách ứng viên từ blockchain
+        window.App.getAllCandidates()
+          .then(candidates => {
+            console.log('Đã lấy dữ liệu ứng viên từ blockchain:', candidates);
+            currentResults = candidates;
+            updateResultsList();
+            updateResultsChart();
+            updateStats();
+            updateLastUpdateTime();
+          })
+          .catch(error => {
+            console.error('Lỗi khi lấy dữ liệu ứng cử viên từ blockchain:', error);
+            $('#results-list').html(`<tr><td colspan="5" class="text-center"><i class="fas fa-exclamation-triangle"></i> Lỗi: ${error.message}</td></tr>`);
+          });
+        
+        // Lấy tổng số cử tri từ blockchain
+        window.App.getTotalVoters()
+          .then(count => {
+            console.log('Đã lấy số lượng cử tri từ blockchain:', count);
+            totalVoters = count;
+            updateStats();
+          })
+          .catch(error => {
+            console.error('Lỗi khi lấy số lượng cử tri từ blockchain:', error);
+          });
+        
+        // Lấy lịch sử bỏ phiếu gần đây từ blockchain 
+        window.App.getRecentVotes()
+          .then(votes => {
+            console.log('Đã lấy lịch sử bỏ phiếu từ blockchain:', votes);
+            renderRecentVotes(votes);
+          })
+          .catch(error => {
+            console.error('Lỗi khi lấy lịch sử bỏ phiếu từ blockchain:', error);
+            $('#recent-votes').html(`<tr><td colspan="3" class="text-center"><i class="fas fa-exclamation-triangle"></i> Lỗi: ${error.message}</td></tr>`);
+          });
+      }
+      
+      // Hàm render lịch sử bỏ phiếu gần đây
+      function renderRecentVotes(votes) {
+        const recentVotesList = $('#recent-votes');
+        recentVotesList.empty();
+        
+        if (votes.length === 0) {
+          recentVotesList.html('<tr><td colspan="3" class="text-center">Chưa có giao dịch bỏ phiếu nào</td></tr>');
+          return;
         }
         
-        element.innerHTML = icon + message;
-        element.style.display = 'flex';
+        votes.forEach(vote => {
+          const row = $(`
+            <tr>
+              <td>${vote.time}</td>
+              <td>${vote.voter}</td>
+              <td>${vote.candidate}</td>
+            </tr>
+          `);
+          recentVotesList.append(row);
+        });
       }
-    </script>
-  </body>
+      
+      // Hàm xử lý đếm ngược
+      function startCountdown() {
+        clearInterval(refreshInterval);
+        countdown = 30;
+        $('#refreshTimer').text(countdown);
+        
+        refreshInterval = setInterval(() => {
+          countdown--;
+          $('#refreshTimer').text(countdown);
+          
+          if (countdown <= 0) {
+            fetchCurrentResults();
+            countdown = 30;
+          }
+        }, 1000);
+      }
+      
+      // Khởi tạo khi tab kết quả được chọn
+      $('.admin-nav-item[data-section="results-section"]').click(function() {
+        fetchCurrentResults();
+        startCountdown();
+      });
+      
+      // Sự kiện cập nhật thủ công
+      $('#refreshResults').click(function() {
+        fetchCurrentResults();
+        startCountdown();
+      });
+      
+      // Xử lý toggle tự động cập nhật
+      $('#autoRefreshToggle').change(function() {
+        if ($(this).is(':checked')) {
+          startCountdown();
+        } else {
+          clearInterval(refreshInterval);
+          $('#refreshTimer').text('--');
+        }
+      });
+      
+      // Khởi tạo ban đầu nếu đang ở tab kết quả
+      if ($('#results-section').is(':visible')) {
+        fetchCurrentResults();
+        startCountdown();
+      }
+    });
+  </script>
+</body>
+
 </html>
