@@ -35,9 +35,9 @@ contract VotingSystem {
         uint[] candidateIds;
     }
 
-    // Các biến lưu trữ
-    mapping(uint => Candidate) public candidates;
-    uint public countCandidates;
+        // Các biến lưu trữ
+        mapping(uint => Candidate) public candidates;
+        uint public countCandidates;
 
     mapping(uint => Election) public elections;
     uint public countElections;
@@ -59,6 +59,7 @@ contract VotingSystem {
     event ProposalRejected(uint proposalId, address rejector, string reason);
     event ElectionCreated(uint electionId, string name, uint256 startDate, uint256 endDate);
     event VoteCast(uint electionId, address voter, uint candidateId);
+    event CandidateUpdated(uint candidateId, string name, string party, address updater);
 
     // Constructor
     constructor() public {
@@ -87,8 +88,24 @@ contract VotingSystem {
     // Thêm ứng viên
     function addCandidate(string memory name, string memory party) public onlyAdmin returns(uint) {
         countCandidates++;
-        candidates[countCandidates] = Candidate(countCandidates, name, party, 0);
+        candidates[countCandidates] = Candidate(countCandidates, name, party, uint _electionId);
         return countCandidates;
+    }
+
+    // Cập nhật thông tin ứng viên
+    function updateCandidate(uint id, string memory name, string memory party) public onlyAdmin returns(bool) {
+        // Kiểm tra xem ID có tồn tại
+        require(id > 0 && id <= countCandidates, "ID ứng viên không hợp lệ");
+        
+        // Lưu lại số phiếu bầu
+        uint voteCount = candidates[id].voteCount;
+        
+        // Cập nhật thông tin mới
+        candidates[id] = Candidate(id, name, party, voteCount);
+        
+        emit CandidateUpdated(id, name, party, msg.sender);
+        
+        return true;
     }
 
     // Lấy thông tin ứng viên
