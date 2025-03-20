@@ -7,6 +7,7 @@ contract VotingSystem {
         string name;
         string party; 
         uint voteCount;
+        uint electionId; // ID của cuộc bầu cử mà ứng viên tham gia, 0 nếu chưa tham gia cuộc bầu cử nào
     }
 
     // Cấu trúc cho một cuộc bầu cử
@@ -88,7 +89,7 @@ contract VotingSystem {
     // Thêm ứng viên
     function addCandidate(string memory name, string memory party) public onlyAdmin returns(uint) {
         countCandidates++;
-        candidates[countCandidates] = Candidate(countCandidates, name, party, uint _electionId);
+        candidates[countCandidates] = Candidate(countCandidates, name, party, 0, 0); // Khởi tạo với electionId = 0
         return countCandidates;
     }
 
@@ -97,11 +98,12 @@ contract VotingSystem {
         // Kiểm tra xem ID có tồn tại
         require(id > 0 && id <= countCandidates, "ID ứng viên không hợp lệ");
         
-        // Lưu lại số phiếu bầu
+        // Lưu lại số phiếu bầu và electionId
         uint voteCount = candidates[id].voteCount;
+        uint electionId = candidates[id].electionId;
         
         // Cập nhật thông tin mới
-        candidates[id] = Candidate(id, name, party, voteCount);
+        candidates[id] = Candidate(id, name, party, voteCount, electionId);
         
         emit CandidateUpdated(id, name, party, msg.sender);
         
@@ -109,10 +111,10 @@ contract VotingSystem {
     }
 
     // Lấy thông tin ứng viên
-    function getCandidate(uint candidateId) public view returns (uint, string memory, string memory, uint) {
+    function getCandidate(uint candidateId) public view returns (uint, string memory, string memory, uint, uint) {
         require(candidateId > 0 && candidateId <= countCandidates, "ID ứng viên không hợp lệ");
         Candidate memory candidate = candidates[candidateId];
-        return (candidate.id, candidate.name, candidate.party, candidate.voteCount);
+        return (candidate.id, candidate.name, candidate.party, candidate.voteCount, candidate.electionId);
     }
 
     // Lấy số lượng ứng viên
@@ -123,6 +125,26 @@ contract VotingSystem {
     // QUẢN LÝ ĐỀ XUẤT BẦU CỬ
     
     // Hàm tạo đề xuất (dành cho Admin)
+    // Lấy danh sách ứng viên chưa thuộc cuộc bầu cử nào
+    function getAvailableCandidates() public view returns(uint[] memory) {
+        uint count = 0;
+        for(uint i = 1; i <= countCandidates; i++) {
+            if(candidates[i].electionId == 0) {
+                count++;
+            }
+        }
+        
+        uint[] memory availableCandidates = new uint[](count);
+        uint index = 0;
+        for(uint i = 1; i <= countCandidates; i++) {
+            if(candidates[i].electionId == 0) {
+                availableCandidates[index] = i;
+                index++;
+            }
+        }
+        return availableCandidates;
+    }
+
     function createElectionProposal(
         string memory _name,
         string memory _description,
@@ -133,9 +155,10 @@ contract VotingSystem {
         // Kiểm tra thời gian hợp lệ
         require(_endDate > _startDate, "Thời gian kết thúc phải sau thời gian bắt đầu");
         
-        // Kiểm tra danh sách ứng viên hợp lệ
+        // Kiểm tra danh sách ứng viên hợp lệ và chưa thuộc cuộc bầu cử nào
         for (uint i = 0; i < _candidateIds.length; i++) {
             require(_candidateIds[i] > 0 && _candidateIds[i] <= countCandidates, "ID ứng viên không hợp lệ");
+            require(candidates[_candidateIds[i]].electionId == 0, "Ứng viên đã thuộc một cuộc bầu cử khác");
         }
         
         proposalCount++;
@@ -175,6 +198,11 @@ contract VotingSystem {
         elections[newElectionId].endDate = proposal.proposedEndDate;
         elections[newElectionId].isActive = true;
         elections[newElectionId].candidateIds = proposal.candidateIds;
+
+        // Cập nhật electionId cho các ứng viên được chọn
+        for (uint i = 0; i < proposal.candidateIds.length; i++) {
+            candidates[proposal.candidateIds[i]].electionId = newElectionId;
+        }
         
         emit ProposalApproved(_proposalId, msg.sender);
         emit ElectionCreated(
@@ -401,4 +429,4 @@ contract VotingSystem {
         
         return true;
     }
-} 
+}

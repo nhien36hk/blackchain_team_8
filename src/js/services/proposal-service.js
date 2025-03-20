@@ -109,7 +109,7 @@ async function createElectionProposal(proposalData) {
  * @param {number} endDate Thời gian kết thúc (timestamp)
  * @returns {Promise<Object>} Kết quả giao dịch
  */
-async function createProposal(title, description, startDate, endDate) {
+async function createProposal(title, description, startDate, endDate, candidateIds) {
     try {
         // Tạo đối tượng Date từ timestamp
         const startTime = new Date(startDate * 1000);
@@ -120,6 +120,7 @@ async function createProposal(title, description, startDate, endDate) {
         console.log("- Mô tả:", description);
         console.log("- Thời gian bắt đầu:", startTime.toLocaleString());
         console.log("- Thời gian kết thúc:", endTime.toLocaleString());
+        console.log("- Danh sách ứng viên:", candidateIds);
         
         // Lấy danh sách ứng viên đã chọn
         // Trong thực tế, danh sách ứng viên nên được chọn từ giao diện
@@ -164,30 +165,9 @@ async function createProposal(title, description, startDate, endDate) {
         // }
         
         // Nếu là admin, tiếp tục tạo đề xuất
-        // Lấy danh sách ứng viên đã chọn (giả định là chọn tất cả)
-        let candidateIds = [];
-        
-        // Thử lấy danh sách id của tất cả ứng viên
-        try {
-            let candidateCount = 0;
-            
-            if (isDirectConnection()) {
-                if (votingInstance.methods && typeof votingInstance.methods.getCountCandidates === 'function') {
-                    candidateCount = await votingInstance.methods.getCountCandidates().call({from: account});
-                }
-            } else {
-                if (typeof votingInstance.getCountCandidates === 'function') {
-                    candidateCount = await votingInstance.getCountCandidates({from: account});
-                }
-            }
-            
-            // Thêm tất cả ID ứng viên từ 1 đến candidateCount
-            for (let i = 1; i <= candidateCount; i++) {
-                candidateIds.push(i);
-            }
-        } catch (error) {
-            console.warn("Không thể lấy danh sách ứng viên:", error);
-            // Để mảng rỗng, sẽ hiển thị thông báo sau
+        // Kiểm tra danh sách ứng viên đã chọn
+        if (!candidateIds || candidateIds.length === 0) {
+            throw new Error("Vui lòng chọn ít nhất một ứng viên cho cuộc bầu cử");
         }
         
         if (candidateIds.length === 0) {
@@ -464,4 +444,4 @@ module.exports = {
     cancelProposal,
     getAllProposals,
     withdrawProposal
-}; 
+};

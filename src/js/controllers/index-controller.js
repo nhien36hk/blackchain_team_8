@@ -419,4 +419,4 @@ function initIndexController() {
 
 module.exports = {
   initIndexController
-}; 
+};

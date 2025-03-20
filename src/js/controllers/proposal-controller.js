@@ -3,6 +3,35 @@
  */
 
 const { createProposal, getAllProposals, withdrawProposal } = require('../services/proposal-service');
+  const { getAvailableCandidates, getCandidate } = require('../services/candidate-service');
+
+// Hàm load danh sách ứng viên khả dụng
+async function loadAvailableCandidates() {
+  try {
+    const availableCandidateIds = await getAvailableCandidates();
+    console.log('Danh sách ID ứng viên khả dụng:', availableCandidateIds);
+    
+    const select = document.getElementById('proposal-candidates');
+    select.innerHTML = ''; // Xóa các option cũ
+
+    // Thêm các ứng viên vào select
+    for (const id of availableCandidateIds) {
+      const candidateInfo = await getCandidate(id);
+      console.log('Thông tin ứng viên:', {
+        id: id,
+        name: candidateInfo[1],
+        party: candidateInfo[2]
+      });
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = `${candidateInfo[1]} - ${candidateInfo[2]}`;
+      select.appendChild(option);
+    }
+  } catch (error) {
+    console.error('Lỗi khi tải danh sách ứng viên:', error);
+    alert('Không thể tải danh sách ứng viên. Vui lòng thử lại sau.');
+  }
+}
 
 // Khởi tạo controller
 function initProposalController() {
@@ -16,9 +45,10 @@ function initProposalController() {
     var description = $('#proposal-description').val();
     var startDate = Date.parse($('#proposal-start-date').val())/1000;
     var endDate = Date.parse($('#proposal-end-date').val())/1000;
+    var selectedCandidates = $('#proposal-candidates').val();
     
-    if (!title || !description || isNaN(startDate) || isNaN(endDate)) {
-      $('#proposalStatus').html("<p style='color: var(--warning-color);'>Vui lòng nhập đầy đủ thông tin!</p>");
+    if (!title || !description || isNaN(startDate) || isNaN(endDate) || !selectedCandidates || selectedCandidates.length === 0) {
+      $('#proposalStatus').html("<p style='color: var(--warning-color);'>Vui lòng nhập đầy đủ thông tin và chọn ít nhất một ứng viên!</p>");
       $('#proposalStatus').show();
       return;
     }
@@ -32,7 +62,10 @@ function initProposalController() {
     $('#proposalStatus').html("<p style='color: white;'>Đang gửi đề xuất, vui lòng đợi...</p>");
     $('#proposalStatus').show();
     
-    createProposal(title, description, startDate, endDate)
+    // Chuyển đổi mảng string sang mảng số nguyên
+    const candidateIds = selectedCandidates.map(id => parseInt(id));
+    
+    createProposal(title, description, startDate, endDate, candidateIds)
       .then(function() {
         $('#proposalStatus').html("<p style='color: var(--success-color);'>Đã gửi đề xuất thành công!</p>");
         
@@ -41,6 +74,7 @@ function initProposalController() {
         $('#proposal-description').val('');
         $('#proposal-start-date').val('');
         $('#proposal-end-date').val('');
+        $('#proposal-candidates').val([]);
         
         // Làm mới danh sách đề xuất sau 1 giây
         setTimeout(function() {
@@ -52,9 +86,10 @@ function initProposalController() {
       });
   });
   
-  // Tự động load danh sách đề xuất khi tab được hiển thị
+  // Tự động load danh sách đề xuất và ứng viên khi tab được hiển thị
   $('.admin-nav-item[data-section="proposals-section"]').click(function() {
     loadProposalList();
+    loadAvailableCandidates();
   });
   
   // Navigation giữa các tab
@@ -213,4 +248,4 @@ function attachEventHandlers() {
 module.exports = {
   initProposalController,
   loadProposalList
-}; 
+};

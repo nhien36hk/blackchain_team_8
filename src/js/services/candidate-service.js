@@ -2,6 +2,42 @@ const { VotingContract, Web3 } = require('../config/web3-config');
 const { getCurrentAccount } = require('./account-service');
 const { getContractInstance, isDirectConnection, getVotingInstance } = require('./contract-service');
 
+/**
+ * Lấy danh sách ứng viên chưa thuộc cuộc bầu cử nào
+ * @returns {Promise<Array>} Danh sách ID các ứng viên
+ */
+async function getAvailableCandidates() {
+    try {
+        const votingInstance = getVotingInstance();
+        if (!votingInstance) {
+            throw new Error("Chưa khởi tạo hợp đồng");
+        }
+
+        const account = await getCurrentAccount();
+        let availableCandidates = [];
+
+        if (isDirectConnection()) {
+            if (votingInstance.methods && typeof votingInstance.methods.getCandidatesByElectionId === 'function') {
+                // Lấy danh sách ứng viên có electionId = 0 (chưa thuộc cuộc bầu cử nào)
+                availableCandidates = await votingInstance.methods.getCandidatesByElectionId(0).call({from: account});
+            } else {
+                throw new Error("Hàm getCandidatesByElectionId không có sẵn trong hợp đồng");
+            }
+        } else {
+            if (typeof votingInstance.getCandidatesByElectionId === 'function') {
+                availableCandidates = await votingInstance.getCandidatesByElectionId(0, {from: account});
+            } else {
+                throw new Error("Hàm getCandidatesByElectionId không có sẵn trong hợp đồng");
+            }
+        }
+
+        return availableCandidates;
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách ứng viên khả dụng:', error);
+        throw error;
+    }
+}
+
 // Thêm ứng cử viên mới
 function addCandidate(nameCandidate, partyCandidate) {
   // Kiểm tra dữ liệu đầu vào
@@ -302,6 +338,7 @@ module.exports = {
   getAllCandidates,
   updateCandidate,
   deleteCandidate,
-  getCountCandidates, 
-  getCandidate
-}; 
+  getCountCandidates,
+  getCandidate,
+  getAvailableCandidates
+};
