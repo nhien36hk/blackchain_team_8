@@ -7,6 +7,9 @@ contract VotingSystem {
         string name;
         string party; 
         uint voteCount;
+        uint isBelong;// 0: chưa thuộc đề xuất/cuộc bầu cử nào
+                   // 1-999999: thuộc cuộc bầu cử có ID tương ứng
+                   // >=1000000: thuộc đề xuất có ID = (giá trị - 1000000)
         uint electionId; // ID của cuộc bầu cử mà ứng viên tham gia, 0 nếu chưa tham gia cuộc bầu cử nào
     }
 
@@ -89,25 +92,8 @@ contract VotingSystem {
     // Thêm ứng viên
     function addCandidate(string memory name, string memory party) public onlyAdmin returns(uint) {
         countCandidates++;
-        candidates[countCandidates] = Candidate(countCandidates, name, party, 0, 0); // Khởi tạo với electionId = 0
+        candidates[countCandidates] = Candidate(countCandidates, name, party, 0);
         return countCandidates;
-    }
-
-    // Cập nhật thông tin ứng viên
-    function updateCandidate(uint id, string memory name, string memory party) public onlyAdmin returns(bool) {
-        // Kiểm tra xem ID có tồn tại
-        require(id > 0 && id <= countCandidates, "ID ứng viên không hợp lệ");
-        
-        // Lưu lại số phiếu bầu và electionId
-        uint voteCount = candidates[id].voteCount;
-        uint electionId = candidates[id].electionId;
-        
-        // Cập nhật thông tin mới
-        candidates[id] = Candidate(id, name, party, voteCount, electionId);
-        
-        emit CandidateUpdated(id, name, party, msg.sender);
-        
-        return true;
     }
 
     // Lấy thông tin ứng viên
@@ -146,11 +132,11 @@ contract VotingSystem {
     }
 
     function createElectionProposal(
-        string memory _name,
-        string memory _description,
-        uint256 _startDate,
-        uint256 _endDate,
-        uint[] memory _candidateIds
+    string memory _name,
+    string memory _description,
+    uint256 _startDate,
+    uint256 _endDate,
+    uint[] memory _candidateIds
     ) public onlyAdmin returns(uint) {
         // Kiểm tra thời gian hợp lệ
         require(_endDate > _startDate, "Thời gian kết thúc phải sau thời gian bắt đầu");
@@ -158,7 +144,6 @@ contract VotingSystem {
         // Kiểm tra danh sách ứng viên hợp lệ và chưa thuộc cuộc bầu cử nào
         for (uint i = 0; i < _candidateIds.length; i++) {
             require(_candidateIds[i] > 0 && _candidateIds[i] <= countCandidates, "ID ứng viên không hợp lệ");
-            require(candidates[_candidateIds[i]].electionId == 0, "Ứng viên đã thuộc một cuộc bầu cử khác");
         }
         
         proposalCount++;
@@ -173,6 +158,12 @@ contract VotingSystem {
             rejectionReason: "",
             candidateIds: _candidateIds
         });
+        
+        // Đánh dấu ứng viên đang trong đề xuất (ID đề xuất + 1000000)
+        for (uint i = 0; i < _candidateIds.length; i++) {
+           uint candidateId = _candidateIds[i];
+           candidates[candidateId].isBelong = proposalCount + 1000000;
+        }
         
         emit ProposalCreated(proposalCount, msg.sender);
         return proposalCount;
@@ -198,11 +189,6 @@ contract VotingSystem {
         elections[newElectionId].endDate = proposal.proposedEndDate;
         elections[newElectionId].isActive = true;
         elections[newElectionId].candidateIds = proposal.candidateIds;
-
-        // Cập nhật electionId cho các ứng viên được chọn
-        for (uint i = 0; i < proposal.candidateIds.length; i++) {
-            candidates[proposal.candidateIds[i]].electionId = newElectionId;
-        }
         
         emit ProposalApproved(_proposalId, msg.sender);
         emit ElectionCreated(
@@ -220,6 +206,15 @@ contract VotingSystem {
         require(!proposal.isApproved, "Đề xuất đã được phê duyệt trước đó");
         
         proposal.rejectionReason = _reason;
+        
+        // Giải phóng các ứng viên thuộc đề xuất bị từ chối
+        for (uint i = 0; i < proposal.candidateIds.length; i++) {
+            uint candidateId = proposal.candidateIds[i];
+            // Chỉ giải phóng nếu ứng viên vẫn thuộc đề xuất này
+            if (candidates[candidateId].isBelong == _proposalId + 1000000) {
+                candidates[candidateId].isBelong = 0;
+            }
+        }
         
         emit ProposalRejected(_proposalId, msg.sender, _reason);
     }
@@ -327,6 +322,16 @@ contract VotingSystem {
     function endElection(uint _electionId) public onlyAdmin {
         require(_electionId > 0 && _electionId <= countElections, "ID cuộc bầu cử không hợp lệ");
         elections[_electionId].isActive = false;
+        
+        // Giải phóng các ứng viên sau khi cuộc bầu cử kết thúc
+        uint[] memory electionCandidates = elections[_electionId].candidateIds;
+        for (uint i = 0; i < electionCandidates.length; i++) {
+            uint candidateId = electionCandidates[i];
+            // Chỉ giải phóng nếu ứng viên vẫn thuộc cuộc bầu cử này
+            if (candidates[candidateId].isBelong == _electionId) {
+                candidates[candidateId].isBelong = 0;
+            }
+        }
     }
     
     // Lấy tất cả đề xuất chờ phê duyệt
@@ -429,4 +434,4 @@ contract VotingSystem {
         
         return true;
     }
-}
+} 
