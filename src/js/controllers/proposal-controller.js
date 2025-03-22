@@ -3,6 +3,7 @@
  */
 
 const { createProposal, getAllProposals, withdrawProposal } = require('../services/proposal-service');
+const { getAvailableCandidates } = require('../services/candidate-service');
 
 // Khởi tạo controller
 function initProposalController() {
@@ -17,6 +18,18 @@ function initProposalController() {
     var startDate = Date.parse($('#proposal-start-date').val())/1000;
     var endDate = Date.parse($('#proposal-end-date').val())/1000;
     
+    // Lấy danh sách ID ứng viên đã chọn
+    var selectedCandidateIds = [];
+    $('.candidate-checkbox:checked').each(function() {
+      // Đảm bảo ID được chuyển đổi thành số nguyên
+      var id = parseInt($(this).val());
+      if (!isNaN(id)) {
+        selectedCandidateIds.push(id);
+      }
+    });
+    
+    console.log("Danh sách ứng viên đã chọn:", selectedCandidateIds);
+    
     if (!title || !description || isNaN(startDate) || isNaN(endDate)) {
       $('#proposalStatus').html("<p style='color: var(--warning-color);'>Vui lòng nhập đầy đủ thông tin!</p>");
       $('#proposalStatus').show();
@@ -29,10 +42,16 @@ function initProposalController() {
       return;
     }
     
+    if (selectedCandidateIds.length === 0) {
+      $('#proposalStatus').html("<p style='color: var(--warning-color);'>Vui lòng chọn ít nhất một ứng viên!</p>");
+      $('#proposalStatus').show();
+      return;
+    }
+    
     $('#proposalStatus').html("<p style='color: white;'>Đang gửi đề xuất, vui lòng đợi...</p>");
     $('#proposalStatus').show();
     
-    createProposal(title, description, startDate, endDate)
+    createProposal(title, description, startDate, endDate, selectedCandidateIds)
       .then(function() {
         $('#proposalStatus').html("<p style='color: var(--success-color);'>Đã gửi đề xuất thành công!</p>");
         
@@ -41,6 +60,8 @@ function initProposalController() {
         $('#proposal-description').val('');
         $('#proposal-start-date').val('');
         $('#proposal-end-date').val('');
+        $('.candidate-checkbox').prop('checked', false);
+        loadAvailableCandidateList();
         
         // Làm mới danh sách đề xuất sau 1 giây
         setTimeout(function() {
@@ -55,6 +76,7 @@ function initProposalController() {
   // Tự động load danh sách đề xuất khi tab được hiển thị
   $('.admin-nav-item[data-section="proposals-section"]').click(function() {
     loadProposalList();
+    loadAvailableCandidateList(); // Tải danh sách ứng viên có sẵn
   });
   
   // Navigation giữa các tab
@@ -70,11 +92,97 @@ function initProposalController() {
     // Đánh dấu tab hiện tại
     $('.admin-nav-item').removeClass('active');
     $(this).addClass('active');
+    
+    // Nếu là tab đề xuất, tải danh sách ứng viên có sẵn
+    if (targetSection === 'proposals-section') {
+      loadAvailableCandidateList();
+    }
   });
   
   // Mặc định hiển thị tab ứng viên khi load trang
   $('#candidates-section').show();
   $('.admin-nav-item[data-section="candidates-section"]').addClass('active');
+  
+  // Nút chọn tất cả ứng viên
+  $(document).on('click', '#select-all-candidates', function() {
+    $('.candidate-checkbox').prop('checked', $(this).prop('checked'));
+  });
+}
+
+// Hàm load danh sách ứng viên có sẵn
+function loadAvailableCandidateList() {
+  console.log("Đang tải danh sách ứng viên có sẵn...");
+  
+  // Hiển thị trạng thái đang tải
+  $('#available-candidates').html("<p class='text-center'><i class='fas fa-spinner fa-spin'></i> Đang tải danh sách ứng viên...</p>");
+  
+  getAvailableCandidates()
+    .then(function(candidates) {
+      console.log("Đã lấy danh sách ứng viên có sẵn:", candidates);
+      
+      if (!candidates || candidates.length === 0) {
+        $('#available-candidates').html("<p class='text-center'>Không có ứng viên nào có sẵn. Vui lòng thêm ứng viên mới.</p>");
+        return;
+      }
+      
+      // Tạo HTML cho danh sách ứng viên
+      let html = `
+        <div class="candidate-selection">
+          <div class="candidate-header">
+            <label class="container">
+              <input type="checkbox" id="select-all-candidates"> Chọn tất cả
+              <span class="checkmark"></span>
+            </label>
+          </div>
+          <div class="candidate-list">
+      `;
+      
+      candidates.forEach(function(candidate) {
+        // Lấy thông tin từ ứng viên từ cấu trúc dữ liệu trả về từ Solidity
+        let id, name, party;
+        
+        // Solidity trả về cấu trúc tuple dưới dạng object với các key là số 0, 1, 2, 3, 4
+        // [0]: id, [1]: name, [2]: party, [3]: voteCount, [4]: isBelong
+        if (candidate && (candidate[0] !== undefined)) {
+          // Đây là cấu trúc đúng từ hàm getCandidate - array-like object
+          id = parseInt(candidate[0].toString());  // Chuyển BN sang number
+          name = candidate[1];
+          party = candidate[2];
+        } else if (candidate && candidate.id) {
+          // Trường hợp object có cấu trúc rõ ràng
+          id = candidate.id;
+          name = candidate.name;
+          party = candidate.party;
+        } else {
+          // Trường hợp không xác định
+          console.warn("Định dạng ứng viên không phù hợp:", candidate);
+          return; // Bỏ qua ứng viên này
+        }
+        
+        html += `
+          <div class="candidate-item">
+            <label class="container">
+              <input type="checkbox" class="candidate-checkbox" value="${id}">
+              <span class="candidate-name">${name}</span>
+              <span class="candidate-party">${party}</span>
+              <span class="checkmark"></span>
+            </label>
+          </div>
+        `;
+      });
+      
+      html += `
+          </div>
+        </div>
+      `;
+      
+      $('#available-candidates').html(html);
+    })
+    .catch(function(error) {
+      console.error("Lỗi khi tải danh sách ứng viên có sẵn:", error);
+      $('#available-candidates').html(`<p class='text-center text-danger'>
+        <i class='fas fa-exclamation-triangle'></i> Lỗi: ${error.message}</p>`);
+    });
 }
 
 // Hàm load danh sách đề xuất
@@ -212,5 +320,6 @@ function attachEventHandlers() {
 // Xuất module
 module.exports = {
   initProposalController,
-  loadProposalList
+  loadProposalList,
+  loadAvailableCandidateList
 }; 

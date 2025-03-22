@@ -5,6 +5,7 @@
 
 const { getContractInstance, isDirectConnection, getVotingInstance } = require('./contract-service.js');
 const { getCurrentAccount } = require('./account-service.js');
+const { getAvailableCandidates } = require('./candidate-service.js');
 
 /**
  * Tạo một đề xuất cuộc bầu cử mới
@@ -107,9 +108,10 @@ async function createElectionProposal(proposalData) {
  * @param {string} description Mô tả cuộc bầu cử
  * @param {number} startDate Thời gian bắt đầu (timestamp)
  * @param {number} endDate Thời gian kết thúc (timestamp)
+ * @param {Array<number>} selectedCandidateIds Danh sách ID ứng viên được chọn (tùy chọn)
  * @returns {Promise<Object>} Kết quả giao dịch
  */
-async function createProposal(title, description, startDate, endDate) {
+async function createProposal(title, description, startDate, endDate, selectedCandidateIds = null) {
     try {
         // Tạo đối tượng Date từ timestamp
         const startTime = new Date(startDate * 1000);
@@ -122,7 +124,6 @@ async function createProposal(title, description, startDate, endDate) {
         console.log("- Thời gian kết thúc:", endTime.toLocaleString());
         
         // Lấy danh sách ứng viên đã chọn
-        // Trong thực tế, danh sách ứng viên nên được chọn từ giao diện
         const votingInstance = getVotingInstance();
         if (!votingInstance) {
             throw new Error("Chưa khởi tạo hợp đồng");
@@ -148,53 +149,51 @@ async function createProposal(title, description, startDate, endDate) {
             // Tiếp tục với giả định là không phải admin
         }
         
-        // if (!isAdmin) {
-        //     // Nếu không phải admin, hiện thông báo và mô phỏng kết quả
-        //     console.warn("Tài khoản không có quyền admin, chỉ admin mới có thể tạo đề xuất trực tiếp.");
-        //     // Hiển thị thông báo cho người dùng
-        //     alert("Chức năng tạo đề xuất chỉ dành cho quản trị viên. Đề xuất của bạn đã được ghi nhận và sẽ được chuyển đến quản trị viên xem xét.");
-            
-        //     // Trả về kết quả mô phỏng
-        //     return {
-        //         success: true,
-        //         transactionHash: null,
-        //         proposalId: null,
-        //         note: "Đề xuất đã được ghi nhận và sẽ được chuyển đến quản trị viên."
-        //     };
-        // }
+        // Nếu đã có danh sách ứng viên được chọn, sử dụng danh sách đó
+        let candidateIds = selectedCandidateIds;
         
-        // Nếu là admin, tiếp tục tạo đề xuất
-        // Lấy danh sách ứng viên đã chọn (giả định là chọn tất cả)
-        let candidateIds = [];
-        
-        // Thử lấy danh sách id của tất cả ứng viên
-        try {
-            let candidateCount = 0;
-            
-            if (isDirectConnection()) {
-                if (votingInstance.methods && typeof votingInstance.methods.getCountCandidates === 'function') {
-                    candidateCount = await votingInstance.methods.getCountCandidates().call({from: account});
-                }
-            } else {
-                if (typeof votingInstance.getCountCandidates === 'function') {
-                    candidateCount = await votingInstance.getCountCandidates({from: account});
-                }
+        // Nếu chưa cung cấp danh sách ứng viên, lấy tất cả ứng viên có sẵn
+        if (!candidateIds) {
+            try {
+                // Sử dụng getAvailableCandidates thay vì lấy tất cả ứng viên
+                const availableCandidates = await getAvailableCandidates();
+                console.log("Danh sách ứng viên có sẵn:", availableCandidates);
+                
+                // Lấy chỉ các ID từ danh sách ứng viên có sẵn
+                candidateIds = availableCandidates.map(candidate => {
+                    // Kiểm tra cấu trúc dữ liệu trả về từ blockchain
+                    if (candidate && candidate[0] !== undefined) {
+                        // Đây là cấu trúc dữ liệu từ Solidity tuple trả về (array-like object)
+                        // Chuyển đổi từ BigNumber sang số nguyên
+                        return typeof candidate[0] === 'object' && candidate[0].toString 
+                            ? parseInt(candidate[0].toString()) 
+                            : parseInt(candidate[0]);
+                    } else if (candidate && candidate.id) {
+                        // Trường hợp là object có trường id
+                        return typeof candidate.id === 'object' && candidate.id.toString
+                            ? parseInt(candidate.id.toString())
+                            : parseInt(candidate.id);
+                    } else if (typeof candidate === 'number') {
+                        // Trường hợp là số
+                        return candidate;
+                    } else {
+                        console.warn("Không thể xác định ID của ứng viên:", candidate);
+                        return null;
+                    }
+                }).filter(id => id !== null); // Loại bỏ các ID null
+            } catch (error) {
+                console.warn("Không thể lấy danh sách ứng viên có sẵn:", error);
+                candidateIds = [];
             }
-            
-            // Thêm tất cả ID ứng viên từ 1 đến candidateCount
-            for (let i = 1; i <= candidateCount; i++) {
-                candidateIds.push(i);
-            }
-        } catch (error) {
-            console.warn("Không thể lấy danh sách ứng viên:", error);
-            // Để mảng rỗng, sẽ hiển thị thông báo sau
         }
         
         if (candidateIds.length === 0) {
-            console.warn("Không có ứng viên nào được chọn. Vui lòng thêm ít nhất một ứng viên.");
-            alert("Vui lòng thêm ít nhất một ứng viên trước khi tạo đề xuất bầu cử.");
-            throw new Error("Không có ứng viên nào được chọn");
+            console.warn("Không có ứng viên nào được chọn hoặc có sẵn. Vui lòng thêm ít nhất một ứng viên.");
+            alert("Không có ứng viên nào có sẵn. Tất cả ứng viên đã thuộc các cuộc bầu cử hoặc đề xuất khác. Vui lòng thêm ứng viên mới trước khi tạo đề xuất bầu cử.");
+            throw new Error("Không có ứng viên nào có sẵn");
         }
+        
+        console.log("Danh sách ID ứng viên sẽ được thêm vào đề xuất:", candidateIds);
         
         // Gọi hàm tạo đề xuất
         return await createElectionProposal({

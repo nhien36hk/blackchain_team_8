@@ -5,11 +5,8 @@ contract VotingSystem {
     struct Candidate {
         uint id;
         string name;
-        string party;
+        string party; 
         uint voteCount;
-        uint isBelong; // 0: chưa thuộc đề xuất/cuộc bầu cử nào
-        // 1-999999: thuộc cuộc bầu cử có ID tương ứng
-        // >=1000000: thuộc đề xuất có ID = (giá trị - 1000000)
     }
 
     // Cấu trúc cho một cuộc bầu cử
@@ -89,18 +86,9 @@ contract VotingSystem {
     // QUẢN LÝ ỨNG VIÊN
     
     // Thêm ứng viên
-    function addCandidate(
-        string memory name,
-        string memory party
-    ) public onlyAdmin returns (uint) {
+    function addCandidate(string memory name, string memory party) public onlyAdmin returns(uint) {
         countCandidates++;
-        candidates[countCandidates] = Candidate(
-            countCandidates,
-            name,
-            party,
-            0,
-            0
-        );
+        candidates[countCandidates] = Candidate(countCandidates, name, party, 0);
         return countCandidates;
     }
 
@@ -113,7 +101,7 @@ contract VotingSystem {
         uint voteCount = candidates[id].voteCount;
         
         // Cập nhật thông tin mới
-        candidates[id] = Candidate(id, name, party, voteCount, 0);
+        candidates[id] = Candidate(id, name, party, voteCount);
         
         emit CandidateUpdated(id, name, party, msg.sender);
         
@@ -121,10 +109,10 @@ contract VotingSystem {
     }
 
     // Lấy thông tin ứng viên
-    function getCandidate(uint candidateId) public view returns (uint, string memory, string memory, uint, uint) {
+    function getCandidate(uint candidateId) public view returns (uint, string memory, string memory, uint) {
         require(candidateId > 0 && candidateId <= countCandidates, "ID ứng viên không hợp lệ");
         Candidate memory candidate = candidates[candidateId];
-        return (candidate.id, candidate.name, candidate.party, candidate.voteCount, candidate.isBelong);
+        return (candidate.id, candidate.name, candidate.party, candidate.voteCount);
     }
 
     // Lấy số lượng ứng viên
@@ -135,7 +123,7 @@ contract VotingSystem {
     // QUẢN LÝ ĐỀ XUẤT BẦU CỬ
     
     // Hàm tạo đề xuất (dành cho Admin)
-   function createElectionProposal(
+    function createElectionProposal(
         string memory _name,
         string memory _description,
         uint256 _startDate,
@@ -147,11 +135,7 @@ contract VotingSystem {
         
         // Kiểm tra danh sách ứng viên hợp lệ
         for (uint i = 0; i < _candidateIds.length; i++) {
-            uint candidateId = _candidateIds[i];
-            require(candidateId > 0 && candidateId <= countCandidates, "ID ứng viên không hợp lệ");
-            
-            // Kiểm tra ứng viên chưa thuộc cuộc bầu cử/đề xuất nào
-            require(candidates[candidateId].isBelong == 0, "Ứng viên đã thuộc cuộc bầu cử hoặc đề xuất khác");
+            require(_candidateIds[i] > 0 && _candidateIds[i] <= countCandidates, "ID ứng viên không hợp lệ");
         }
         
         proposalCount++;
@@ -166,12 +150,6 @@ contract VotingSystem {
             rejectionReason: "",
             candidateIds: _candidateIds
         });
-        
-        // Đánh dấu ứng viên đang trong đề xuất (ID đề xuất + 1000000)
-        for (uint i = 0; i < _candidateIds.length; i++) {
-            uint candidateId = _candidateIds[i];
-            candidates[candidateId].isBelong = proposalCount + 1000000; 
-        }
         
         emit ProposalCreated(proposalCount, msg.sender);
         return proposalCount;
@@ -198,15 +176,6 @@ contract VotingSystem {
         elections[newElectionId].isActive = true;
         elections[newElectionId].candidateIds = proposal.candidateIds;
         
-        // Cập nhật isBelong cho các ứng viên từ đề xuất -> cuộc bầu cử
-        for (uint i = 0; i < proposal.candidateIds.length; i++) {
-            uint candidateId = proposal.candidateIds[i];
-            // Chỉ cập nhật nếu ứng viên vẫn thuộc đề xuất này
-            if (candidates[candidateId].isBelong == _proposalId + 1000000) {
-                candidates[candidateId].isBelong = newElectionId;
-            }
-        }
-        
         emit ProposalApproved(_proposalId, msg.sender);
         emit ElectionCreated(
             newElectionId, 
@@ -223,15 +192,6 @@ contract VotingSystem {
         require(!proposal.isApproved, "Đề xuất đã được phê duyệt trước đó");
         
         proposal.rejectionReason = _reason;
-        
-        // Giải phóng các ứng viên thuộc đề xuất bị từ chối
-        for (uint i = 0; i < proposal.candidateIds.length; i++) {
-            uint candidateId = proposal.candidateIds[i];
-            // Chỉ giải phóng nếu ứng viên vẫn thuộc đề xuất này
-            if (candidates[candidateId].isBelong == _proposalId + 1000000) {
-                candidates[candidateId].isBelong = 0;
-            }
-        }
         
         emit ProposalRejected(_proposalId, msg.sender, _reason);
     }
@@ -339,41 +299,6 @@ contract VotingSystem {
     function endElection(uint _electionId) public onlyAdmin {
         require(_electionId > 0 && _electionId <= countElections, "ID cuộc bầu cử không hợp lệ");
         elections[_electionId].isActive = false;
-        
-        // Giải phóng các ứng viên sau khi cuộc bầu cử kết thúc
-        uint[] memory electionCandidates = elections[_electionId].candidateIds;
-        for (uint i = 0; i < electionCandidates.length; i++) {
-            uint candidateId = electionCandidates[i];
-            // Chỉ giải phóng nếu ứng viên vẫn thuộc cuộc bầu cử này
-            if (candidates[candidateId].isBelong == _electionId) {
-                candidates[candidateId].isBelong = 0;
-            }
-        }
-    }
-
-    // Lấy danh sách ID của các ứng cử viên có sẵn (chưa thuộc cuộc bầu cử/đề xuất nào)
-    function getAvailableCandidates() public view returns (uint[] memory) {
-        // Đếm số lượng ứng cử viên có sẵn
-        uint availableCount = 0;
-        for (uint i = 1; i <= countCandidates; i++) {
-            if (candidates[i].isBelong == 0) {
-                availableCount++;
-            }
-        }
-        
-        // Tạo mảng kết quả
-        uint[] memory availableCandidates = new uint[](availableCount);
-        uint currentIndex = 0;
-        
-        // Lấy ID các ứng cử viên có sẵn
-        for (uint i = 1; i <= countCandidates; i++) {
-            if (candidates[i].isBelong == 0) {
-                availableCandidates[currentIndex] = i;
-                currentIndex++;
-            }
-        }
-        
-        return availableCandidates;
     }
     
     // Lấy tất cả đề xuất chờ phê duyệt

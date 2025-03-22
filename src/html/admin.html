@@ -135,20 +135,6 @@
                 <h3>Đề Xuất Bầu Cử</h3>
                 <p>Tạo và quản lý đề xuất cuộc bầu cử mới</p>
               </div>
-              <div class="admin-nav-item" data-section="voters-section">
-                <div class="admin-nav-icon">
-                  <i class="fas fa-users"></i>
-                </div>
-                <h3>Quản Lý Cử Tri</h3>
-                <p>Theo dõi danh sách và trạng thái của cử tri</p>
-              </div>
-              <div class="admin-nav-item" data-section="voting-dates-section">
-                <div class="admin-nav-icon">
-                  <i class="fas fa-calendar-alt"></i>
-                </div>
-                <h3>Thời Gian Bỏ Phiếu</h3>
-                <p>Thiết lập thời gian bắt đầu và kết thúc bỏ phiếu</p>
-              </div>
               <div class="admin-nav-item" data-section="results-section">
                 <div class="admin-nav-icon">
                   <i class="fas fa-chart-bar"></i>
@@ -286,6 +272,18 @@
                 <div class="form-group">
                   <label class="form-label" for="proposal-end-date">Thời gian kết thúc</label>
                   <input id="proposal-end-date" type="datetime-local" class="form-control" name="proposal-end-date">
+                </div>
+              </div>
+            </div>
+            
+            <!-- Thêm phần chọn ứng viên -->
+            <div class="form-row">
+              <div class="form-col">
+                <div class="form-group">
+                  <label class="form-label">Chọn ứng viên tham gia cuộc bầu cử</label>
+                  <div id="available-candidates" class="candidate-selection-container">
+                    <p class="text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách ứng viên...</p>
+                  </div>
                 </div>
               </div>
             </div>

@@ -297,11 +297,64 @@ function deleteCandidate(id) {
     });
 }
 
+// Lấy danh sách ứng viên có sẵn (chưa thuộc cuộc bầu cử/đề xuất nào)
+function getAvailableCandidates() {
+  const votingInstance = getVotingInstance();
+
+  if (!votingInstance) {
+    return Promise.reject(new Error("Chưa khởi tạo hợp đồng"));
+  }
+
+  if (isDirectConnection()) {
+    // Kết nối trực tiếp
+    if (votingInstance.methods && typeof votingInstance.methods.getAvailableCandidates === 'function') {
+      return votingInstance.methods.getAvailableCandidates().call({ from: getCurrentAccount() })
+        .then(availableIds => {
+          console.log("Danh sách ID ứng viên có sẵn:", availableIds);
+          
+          // Chuyển đổi mỗi ID thành số nguyên trước khi gọi getCandidate
+          const promises = availableIds.map(id => {
+            const numericId = typeof id === 'object' && id.toString ? parseInt(id.toString()) : parseInt(id);
+            return getCandidate(numericId);
+          });
+          
+          return Promise.all(promises);
+        });
+    } else {
+      console.warn("Hàm getAvailableCandidates không tồn tại trong contract, sẽ sử dụng getAllCandidates thay thế");
+      // Phương án dự phòng: Lấy tất cả ứng viên
+      return getAllCandidates();
+    }
+  } else {
+    // Kết nối qua truffle-contract
+    if (typeof votingInstance.getAvailableCandidates === 'function') {
+      return votingInstance.getAvailableCandidates({ from: getCurrentAccount() })
+        .then(availableIds => {
+          console.log("Danh sách ID ứng viên có sẵn:", availableIds);
+          
+          // Chuyển đổi mỗi ID thành số nguyên trước khi gọi getCandidate
+          const promises = availableIds.map(id => {
+            // Xử lý trường hợp BigNumber hoặc object khác
+            const numericId = typeof id === 'object' && id.toString ? parseInt(id.toString()) : parseInt(id);
+            return getCandidate(numericId);
+          });
+          
+          return Promise.all(promises);
+        });
+    } else {
+      console.warn("Hàm getAvailableCandidates không tồn tại trong contract, sẽ sử dụng getAllCandidates thay thế");
+      // Phương án dự phòng: Lấy tất cả ứng viên
+      return getAllCandidates();
+    }
+  }
+}
+
 module.exports = {
   addCandidate,
   getAllCandidates,
   updateCandidate,
   deleteCandidate,
   getCountCandidates, 
-  getCandidate
+  getCandidate,
+  getAvailableCandidates
 }; 
