@@ -17,10 +17,10 @@ async function getAllElections() {
             console.warn("Chưa khởi tạo hợp đồng");
             return getSampleElections();
         }
-        
+
         const account = await getCurrentAccount();
         let electionIds = [];
-        
+
         // Kiểm tra xem phương thức có tồn tại không
         if (isDirectConnection()) {
             // Web3 trực tiếp
@@ -39,18 +39,18 @@ async function getAllElections() {
                 return getSampleElections();
             }
         }
-        
+
         // Nếu không có cuộc bầu cử nào, trả về dữ liệu mẫu
         if (!electionIds || electionIds.length === 0) {
             return getSampleElections();
         }
-        
+
         // Lấy chi tiết cho từng cuộc bầu cử
         const elections = await Promise.all(
             electionIds.map(async (id) => {
                 try {
                     let election;
-                    
+
                     if (isDirectConnection()) {
                         if (votingInstance.methods && typeof votingInstance.methods.getElectionDetails === 'function') {
                             election = await votingInstance.methods.getElectionDetails(id).call({ from: account });
@@ -64,7 +64,7 @@ async function getAllElections() {
                             return null;
                         }
                     }
-                    
+
                     return formatElection(id, election);
                 } catch (error) {
                     console.error(`Lỗi khi lấy chi tiết cuộc bầu cử ${id}:`, error);
@@ -72,15 +72,15 @@ async function getAllElections() {
                 }
             })
         );
-        
+
         // Lọc bỏ các election null
         const filteredElections = elections.filter(election => election !== null);
-        
+
         // Nếu không có kết quả hợp lệ, trả về dữ liệu mẫu
         if (filteredElections.length === 0) {
             return getSampleElections();
         }
-        
+
         return filteredElections;
     } catch (error) {
         console.error('Lỗi khi lấy danh sách cuộc bầu cử:', error);
@@ -138,10 +138,10 @@ async function getActiveElections() {
             console.warn("Chưa khởi tạo hợp đồng");
             return []; // Trả về mảng rỗng nếu chưa khởi tạo
         }
-        
+
         const account = await getCurrentAccount();
         let activeElectionIds = [];
-        
+
         // Kiểm tra xem phương thức có tồn tại không
         if (isDirectConnection()) {
             // Web3 trực tiếp
@@ -182,18 +182,18 @@ async function getActiveElections() {
                 }];
             }
         }
-        
+
         // Nếu không có cuộc bầu cử, trả về mảng rỗng
         if (!activeElectionIds || activeElectionIds.length === 0) {
             return [];
         }
-        
+
         // Lấy chi tiết cho từng cuộc bầu cử
         const activeElections = await Promise.all(
             activeElectionIds.map(async (id) => {
                 try {
                     let electionDetails;
-                    
+
                     if (isDirectConnection()) {
                         if (votingInstance.methods && typeof votingInstance.methods.getElectionDetails === 'function') {
                             electionDetails = await votingInstance.methods.getElectionDetails(id).call({ from: account });
@@ -207,7 +207,7 @@ async function getActiveElections() {
                             return null;
                         }
                     }
-                    
+
                     return formatElection(id, electionDetails);
                 } catch (error) {
                     console.error(`Lỗi khi lấy chi tiết cuộc bầu cử ${id}:`, error);
@@ -215,7 +215,7 @@ async function getActiveElections() {
                 }
             })
         );
-        
+
         // Lọc bỏ các election null
         return activeElections.filter(election => election !== null);
     } catch (error) {
@@ -236,9 +236,9 @@ async function getElectionDetails(electionId) {
             console.warn("Chưa khởi tạo hợp đồng");
             return getSampleElectionDetails(electionId);
         }
-        
+
         const account = await getCurrentAccount();
-        
+
         let election;
         // Kiểm tra xem phương thức có tồn tại không
         if (isDirectConnection()) {
@@ -258,7 +258,7 @@ async function getElectionDetails(electionId) {
                 return getSampleElectionDetails(electionId);
             }
         }
-        
+
         // Lấy danh sách các ứng viên trong cuộc bầu cử
         let candidateIds = [];
         if (isDirectConnection()) {
@@ -276,58 +276,78 @@ async function getElectionDetails(electionId) {
                 candidateIds = [1, 2, 3]; // ID mẫu
             }
         }
-        
+
         const candidates = await Promise.all(
             candidateIds.map(async (candidateId) => {
                 try {
-                    let candidate;
+                    let candidate, voteCount;
+                    
                     if (isDirectConnection()) {
+                        // Lấy chi tiết ứng viên
                         if (votingInstance.methods && typeof votingInstance.methods.getCandidate === 'function') {
                             candidate = await votingInstance.methods.getCandidate(candidateId).call({ from: account });
+                            // Cố gắng lấy số phiếu bầu
+                            if (votingInstance.methods && typeof votingInstance.methods.getCandidateVoteCount === 'function') {
+                                voteCount = await votingInstance.methods.getCandidateVoteCount(candidateId).call({ from: account });
+                            } else {
+                                voteCount = 0; // Không dùng random nữa, đặt mặc định là 0
+                            }
+                            
                             return {
                                 id: candidateId,
                                 name: candidate[1] || `Ứng viên ${candidateId}`,
-                                party: candidate[2] || 'Không có thông tin',
-                                voteCount: parseInt(candidate[3] || 0)
+                                party: candidate[2] || 'Không rõ',
+                                voteCount: parseInt(voteCount || 0)
                             };
                         } else {
+                            // Dữ liệu mẫu nếu không có hàm getCandidate
                             return {
                                 id: candidateId,
                                 name: `Ứng viên ${candidateId}`,
-                                party: 'Không có thông tin',
-                                voteCount: Math.floor(Math.random() * 100)
+                                party: 'Không rõ',
+                                voteCount: 0 // Không dùng random nữa, đặt mặc định là 0
                             };
                         }
                     } else {
+                        // Truffle contract
                         if (typeof votingInstance.getCandidate === 'function') {
                             candidate = await votingInstance.getCandidate(candidateId, { from: account });
+                            // Cố gắng lấy số phiếu bầu
+                            if (typeof votingInstance.getCandidateVoteCount === 'function') {
+                                voteCount = await votingInstance.getCandidateVoteCount(candidateId, { from: account });
+                            } else {
+                                voteCount = 0; // Không dùng random nữa, đặt mặc định là 0
+                            }
+                            
                             return {
                                 id: candidateId,
                                 name: candidate[1] || `Ứng viên ${candidateId}`,
-                                party: candidate[2] || 'Không có thông tin',
-                                voteCount: parseInt(candidate[3] || 0)
+                                party: candidate[2] || 'Không rõ',
+                                voteCount: parseInt(voteCount || 0)
                             };
                         } else {
+                            // Dữ liệu mẫu nếu không có hàm getCandidate
                             return {
                                 id: candidateId,
                                 name: `Ứng viên ${candidateId}`,
-                                party: 'Không có thông tin',
-                                voteCount: Math.floor(Math.random() * 100)
+                                party: 'Không rõ',
+                                voteCount: 0 // Không dùng random nữa, đặt mặc định là 0
                             };
                         }
                     }
                 } catch (error) {
                     console.error(`Lỗi khi lấy thông tin ứng viên ${candidateId}:`, error);
+                    // Dữ liệu mẫu trong trường hợp lỗi
                     return {
                         id: candidateId,
                         name: `Ứng viên ${candidateId}`,
-                        party: 'Lỗi khi lấy thông tin',
-                        voteCount: 0
+                        party: 'Không xác định',
+                        voteCount: 0 // Không dùng random nữa, đặt mặc định là 0
                     };
                 }
             })
         );
-        
+
         // Kiểm tra người dùng đã bỏ phiếu hay chưa
         let hasVoted = false;
         try {
@@ -343,7 +363,7 @@ async function getElectionDetails(electionId) {
         } catch (error) {
             console.warn(`Lỗi khi kiểm tra đã bỏ phiếu hay chưa: ${error.message}`);
         }
-        
+
         const formattedElection = formatElection(electionId, election);
         return {
             ...formattedElection,
@@ -383,14 +403,14 @@ function getSampleElectionDetails(electionId) {
             voteCount: 20
         }
     ];
-    
+
     // Tạo các ngày mẫu
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 1); // 1 ngày trước
-    
+
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + 6); // 7 ngày sau thời gian hiện tại
-    
+
     return {
         id: electionId,
         title: `Cuộc bầu cử mẫu #${electionId}`,
@@ -420,9 +440,9 @@ async function endElection(electionId) {
                 isSimulated: true
             };
         }
-        
+
         const account = await getCurrentAccount();
-        
+
         // Kiểm tra xem phương thức có tồn tại không
         if (isDirectConnection()) {
             // Web3 trực tiếp
@@ -479,9 +499,9 @@ async function getElectionResults(electionId) {
             console.warn("Chưa khởi tạo hợp đồng");
             return getSampleElectionResults(electionId);
         }
-        
+
         const account = await getCurrentAccount();
-        
+
         // Lấy chi tiết cuộc bầu cử
         let election;
         if (isDirectConnection()) {
@@ -499,7 +519,7 @@ async function getElectionResults(electionId) {
                 return getSampleElectionResults(electionId);
             }
         }
-        
+
         // Lấy danh sách ứng viên và số phiếu
         let candidateIds = [];
         if (isDirectConnection()) {
@@ -517,7 +537,7 @@ async function getElectionResults(electionId) {
                 candidateIds = [1, 2, 3]; // ID mẫu
             }
         }
-        
+
         const candidates = await Promise.all(
             candidateIds.map(async (candidateId) => {
                 try {
@@ -529,9 +549,9 @@ async function getElectionResults(electionId) {
                             candidate = await votingInstance.methods.getCandidate(candidateId).call({ from: account });
                             // Cố gắng lấy số phiếu bầu
                             if (votingInstance.methods && typeof votingInstance.methods.getCandidateVoteCount === 'function') {
-                                voteCount = await votingInstance.methods.getCandidateVoteCount(electionId, candidateId).call({ from: account });
+                                voteCount = await votingInstance.methods.getCandidateVoteCount(candidateId).call({ from: account });
                             } else {
-                                voteCount = Math.floor(Math.random() * 100); // Dữ liệu mẫu nếu không có hàm
+                                voteCount = 0; // Không dùng random nữa, đặt mặc định là 0
                             }
                             
                             return {
@@ -546,7 +566,7 @@ async function getElectionResults(electionId) {
                                 id: candidateId,
                                 name: `Ứng viên ${candidateId}`,
                                 party: 'Không rõ',
-                                voteCount: Math.floor(Math.random() * 100)
+                                voteCount: 0 // Không dùng random nữa, đặt mặc định là 0
                             };
                         }
                     } else {
@@ -555,9 +575,9 @@ async function getElectionResults(electionId) {
                             candidate = await votingInstance.getCandidate(candidateId, { from: account });
                             // Cố gắng lấy số phiếu bầu
                             if (typeof votingInstance.getCandidateVoteCount === 'function') {
-                                voteCount = await votingInstance.getCandidateVoteCount(electionId, candidateId, { from: account });
+                                voteCount = await votingInstance.getCandidateVoteCount(candidateId, { from: account });
                             } else {
-                                voteCount = Math.floor(Math.random() * 100); // Dữ liệu mẫu nếu không có hàm
+                                voteCount = 0; // Không dùng random nữa, đặt mặc định là 0
                             }
                             
                             return {
@@ -572,7 +592,7 @@ async function getElectionResults(electionId) {
                                 id: candidateId,
                                 name: `Ứng viên ${candidateId}`,
                                 party: 'Không rõ',
-                                voteCount: Math.floor(Math.random() * 100)
+                                voteCount: 0 // Không dùng random nữa, đặt mặc định là 0
                             };
                         }
                     }
@@ -583,18 +603,18 @@ async function getElectionResults(electionId) {
                         id: candidateId,
                         name: `Ứng viên ${candidateId}`,
                         party: 'Không xác định',
-                        voteCount: Math.floor(Math.random() * 50)
+                        voteCount: 0 // Không dùng random nữa, đặt mặc định là 0
                     };
                 }
             })
         );
-        
+
         // Tổng số phiếu
         const totalVotes = candidates.reduce((sum, candidate) => sum + candidate.voteCount, 0);
-        
+
         // Sắp xếp theo số phiếu giảm dần
         candidates.sort((a, b) => b.voteCount - a.voteCount);
-        
+
         // Tính phần trăm cho mỗi ứng viên
         if (totalVotes > 0) {
             candidates.forEach(candidate => {
@@ -605,12 +625,22 @@ async function getElectionResults(electionId) {
                 candidate.percentage = 0;
             });
         }
-        
+
+        // Tính thống kê tỷ lệ tham gia bầu cử
+        // Giả định số lượng cử tri là 100 nếu không có thông tin thực tế
+        const totalVoters = 100; 
+        const turnoutPercentage = totalVoters > 0 ? Math.round((totalVotes / totalVoters) * 1000) / 10 : 0;
+
         const formattedElection = formatElection(electionId, election);
         return {
             ...formattedElection,
             candidates: candidates,
-            totalVotes: totalVotes
+            totalVotes: totalVotes,
+            statistics: {
+                totalVoters: totalVoters,
+                totalVotes: totalVotes,
+                turnoutPercentage: turnoutPercentage
+            }
         };
     } catch (error) {
         console.error(`Lỗi khi lấy kết quả cuộc bầu cử ${electionId}:`, error);
@@ -624,28 +654,28 @@ async function getElectionResults(electionId) {
  * @returns {Object} Dữ liệu mẫu
  */
 function getSampleElectionResults(electionId) {
-    // Tạo danh sách ứng viên mẫu
+    // Tạo danh sách ứng viên mẫu với số phiếu cố định
     const sampleCandidates = [
         {
             id: 1,
             name: "Nguyễn Văn A",
             party: "Đảng A",
-            voteCount: 42,
-            percentage: 42
+            voteCount: 0,  // Đặt mặc định là 0
+            percentage: 0
         },
         {
             id: 2,
             name: "Trần Thị B",
             party: "Đảng B",
-            voteCount: 38,
-            percentage: 38
+            voteCount: 0,  // Đặt mặc định là 0
+            percentage: 0
         },
         {
             id: 3,
             name: "Lê Văn C",
             party: "Đảng C",
-            voteCount: 20,
-            percentage: 20
+            voteCount: 0,  // Đặt mặc định là 0
+            percentage: 0
         }
     ];
     
@@ -664,8 +694,13 @@ function getSampleElectionResults(electionId) {
         endTime: endDate,
         status: "active",
         candidates: sampleCandidates,
-        totalVotes: 100,
-        isSampleData: true
+        totalVotes: 0,  // Đặt tổng số phiếu là 0
+        isSampleData: true,
+        statistics: {
+            totalVoters: 100,  // Giả định có 100 cử tri
+            totalVotes: 0,     // Không có ai bỏ phiếu
+            turnoutPercentage: 0  // Tỷ lệ 0%
+        }
     };
 }
 
@@ -681,9 +716,9 @@ async function isElectionActive(electionId) {
             console.warn("Chưa khởi tạo hợp đồng");
             return false;
         }
-        
+
         const account = await getCurrentAccount();
-        
+
         // Lấy chi tiết cuộc bầu cử
         let election;
         if (isDirectConnection()) {
@@ -701,12 +736,12 @@ async function isElectionActive(electionId) {
                 return true; // Giả lập kết quả
             }
         }
-        
+
         // Kiểm tra isActive và thời gian bầu cử
         const now = Math.floor(Date.now() / 1000);
-        return election.isActive && 
-               parseInt(election.startDate || election.startTime) <= now && 
-               parseInt(election.endDate || election.endTime) > now;
+        return election.isActive &&
+            parseInt(election.startDate || election.startTime) <= now &&
+            parseInt(election.endDate || election.endTime) > now;
     } catch (error) {
         console.error(`Lỗi khi kiểm tra trạng thái cuộc bầu cử ${electionId}:`, error);
         return false; // Mặc định trả về false nếu có lỗi
@@ -726,7 +761,7 @@ async function listenToVoteEvents(electionId, callback) {
             callback(new Error("Chưa khởi tạo hợp đồng"), null);
             return;
         }
-        
+
         // Kiểm tra xem contract có hỗ trợ sự kiện không
         if (isDirectConnection()) {
             if (votingInstance.events && votingInstance.events.VoteCast) {
@@ -735,13 +770,13 @@ async function listenToVoteEvents(electionId, callback) {
                     filter: { electionId: electionId },
                     fromBlock: 'latest'
                 })
-                .on('data', function(event) {
-                    // Gọi callback với dữ liệu sự kiện
-                    callback(null, event.returnValues);
-                })
-                .on('error', function(error) {
-                    callback(error, null);
-                });
+                    .on('data', function (event) {
+                        // Gọi callback với dữ liệu sự kiện
+                        callback(null, event.returnValues);
+                    })
+                    .on('error', function (error) {
+                        callback(error, null);
+                    });
             } else {
                 console.warn("Contract không hỗ trợ sự kiện VoteCast");
                 callback(new Error("Contract không hỗ trợ sự kiện VoteCast"), null);
@@ -767,14 +802,14 @@ function formatElection(id, election) {
     const now = Math.floor(Date.now() / 1000);
     const startTime = parseInt(election.startDate || election.startTime);
     const endTime = parseInt(election.endDate || election.endTime);
-    
+
     let status = 'upcoming';
     if (now >= startTime && now <= endTime && election.isActive) {
         status = 'active';
     } else if (now > endTime || !election.isActive) {
         status = 'completed';
     }
-    
+
     return {
         id: id,
         name: election.name,
@@ -798,15 +833,15 @@ async function hasVoted(electionId) {
         if (!electionId) {
             return false;
         }
-        
+
         const votingInstance = getVotingInstance();
         if (!votingInstance) {
             console.warn("Chưa khởi tạo hợp đồng");
             return false;
         }
-        
+
         const account = await getCurrentAccount();
-        
+
         // Kiểm tra xem phương thức có tồn tại không
         if (isDirectConnection()) {
             // Web3 trực tiếp

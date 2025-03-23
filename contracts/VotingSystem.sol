@@ -23,6 +23,7 @@ contract VotingSystem {
         bool isActive;
         uint[] candidateIds; // Danh sách ID các ứng viên trong cuộc bầu cử này
         mapping(address => bool) hasVoted; // Lưu trạng thái đã bỏ phiếu của cử tri
+        mapping(address => uint) votedCandidate; // Lưu ID ứng viên đã bỏ phiếu của mỗi cử tri
     }
 
     // Cấu trúc cho đề xuất bầu cử
@@ -132,6 +133,13 @@ contract VotingSystem {
     // Lấy số lượng ứng viên
     function getCountCandidates() public view returns(uint) {
         return countCandidates;
+    }
+
+    // Lấy số lượng phiếu bầu của 1 ứng cử viên
+    function getCandidateVoteCount(uint candidateId) public view returns (uint) {
+        require(candidateId > 0 && candidateId <= countCandidates, "ID ứng viên không hợp lệ");
+        Candidate memory candidate = candidates[candidateId];
+        return candidate.voteCount;
     }
 
     // QUẢN LÝ ĐỀ XUẤT BẦU CỬ
@@ -295,6 +303,41 @@ contract VotingSystem {
         return elections[_electionId].hasVoted[msg.sender];
     }
     
+    // Lấy danh sách ID các cuộc bầu cử mà người dùng đã bỏ phiếu
+    function getVotedElections() public view returns (uint[] memory) {
+        uint votedCount = 0;
+        
+        // Đếm số cuộc bầu cử đã bỏ phiếu
+        for (uint i = 1; i <= countElections; i++) {
+            if (elections[i].hasVoted[msg.sender]) {
+                votedCount++;
+            }
+        }
+        
+        // Tạo mảng kết quả
+        uint[] memory votedElections = new uint[](votedCount);
+        uint currentIndex = 0;
+        
+        // Lấy ID các cuộc bầu cử đã bỏ phiếu
+        for (uint i = 1; i <= countElections; i++) {
+            if (elections[i].hasVoted[msg.sender]) {
+                votedElections[currentIndex] = i;
+                currentIndex++;
+            }
+        }
+        
+        return votedElections;
+    }
+
+    // Lấy ID ứng viên mà người dùng đã bỏ phiếu trong một cuộc bầu cử
+    function getVotedCandidate(uint _electionId) public view returns (uint) {
+        require(_electionId > 0 && _electionId <= countElections, "ID cuộc bầu cử không hợp lệ");
+        require(elections[_electionId].hasVoted[msg.sender], "Bạn chưa bỏ phiếu trong cuộc bầu cử này");
+        
+        // Trả về ID ứng viên đã bỏ phiếu
+        return elections[_electionId].votedCandidate[msg.sender];
+    }
+
     // Bỏ phiếu trong cuộc bầu cử cụ thể
     function vote(uint _electionId, uint _candidateId) public {
         // Kiểm tra cuộc bầu cử hợp lệ
@@ -319,8 +362,9 @@ contract VotingSystem {
         }
         require(isValidCandidate, "Ứng viên không thuộc cuộc bầu cử này");
         
-        // Đánh dấu đã bỏ phiếu
+        // Đánh dấu đã bỏ phiếu và lưu ID ứng viên đã chọn
         election.hasVoted[msg.sender] = true;
+        election.votedCandidate[msg.sender] = _candidateId;
         
         // Tăng số phiếu cho ứng viên
         candidates[_candidateId].voteCount++;

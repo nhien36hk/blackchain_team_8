@@ -1140,7 +1140,8 @@ function formatElection(id, election) {
             endTime: endTime,
             status: status,
             creator: election.creator,
-            isActive: election.isActive
+            isActive: election.isActive,
+            candidateCount : election.candidateCount,
         };
     } catch (error) {
         console.error(`Lỗi khi định dạng cuộc bầu cử ${id}:`, error);

@@ -266,10 +266,6 @@ async function viewProposalDetails(proposalId) {
                     
                     ${!isPending ? `
                     <div class="detail-row">
-                        <div class="detail-label">Xử lý bởi:</div>
-                        <div class="detail-value">${proposal.processedBy || 'Không có thông tin'}</div>
-                    </div>
-                    <div class="detail-row">
                         <div class="detail-label">Ngày xử lý:</div>
                         <div class="detail-value">${proposal.processedDate || 'Không có thông tin'}</div>
                     </div>
