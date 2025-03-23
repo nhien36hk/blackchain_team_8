@@ -190,14 +190,14 @@ function loadProposalList() {
   console.log("Đang tải danh sách đề xuất...");
   
   // Hiển thị trạng thái đang tải
-  $('#proposal-list').html("<tr><td colspan='5' class='text-center'><i class='fas fa-spinner fa-spin'></i> Đang tải dữ liệu...</td></tr>");
+  $('#proposal-list').html("<tr><td colspan='7' class='text-center'><i class='fas fa-spinner fa-spin'></i> Đang tải dữ liệu...</td></tr>");
   
   getAllProposals()
     .then(function(proposals) {
       console.log("Đã lấy danh sách đề xuất:", proposals);
       
       if (proposals.length === 0) {
-        $('#proposal-list').html("<tr><td colspan='5' class='text-center'>Chưa có đề xuất nào</td></tr>");
+        $('#proposal-list').html("<tr><td colspan='7' class='text-center'>Chưa có đề xuất nào</td></tr>");
         return;
       }
       
@@ -208,8 +208,17 @@ function loadProposalList() {
       proposals.forEach(function(proposal) {
         const id = proposal.id;
         const title = proposal.title;
+        
+        // Định dạng thời gian
         const startDate = new Date(proposal.startDate * 1000).toLocaleString('vi-VN');
         const endDate = new Date(proposal.endDate * 1000).toLocaleString('vi-VN');
+        
+        // Thời gian tạo đề xuất - nếu có
+        const createdDate = proposal.createdDate ? new Date(proposal.createdDate * 1000).toLocaleString('vi-VN') : "N/A";
+        
+        // Thời gian xử lý (phê duyệt/từ chối) - nếu có
+        const processedDate = proposal.processedDate ? new Date(proposal.processedDate * 1000).toLocaleString('vi-VN') : "N/A";
+        
         const status = getStatusText(proposal.status);
         const statusClass = getStatusClass(proposal.status);
         
@@ -218,6 +227,8 @@ function loadProposalList() {
             <td>${id}</td>
             <td>${title}</td>
             <td>${startDate} - ${endDate}</td>
+            <td>${createdDate}</td>
+            <td>${processedDate}</td>
             <td><span class="status-badge ${statusClass}">${status}</span></td>
             <td class="actions">
               ${proposal.status === 0 ? `
@@ -244,7 +255,7 @@ function loadProposalList() {
     })
     .catch(function(error) {
       console.error("Lỗi khi tải danh sách đề xuất:", error);
-      $('#proposal-list').html(`<tr><td colspan='5' class='text-center text-danger'>
+      $('#proposal-list').html(`<tr><td colspan='7' class='text-center text-danger'>
         <i class='fas fa-exclamation-triangle'></i> Lỗi: ${error.message}</td></tr>`);
     });
 }
@@ -281,7 +292,7 @@ function attachEventHandlers() {
       // Thêm dòng hiển thị trạng thái
       $(this).closest('tr').after(`
         <tr id="withdraw-status-row-${id}">
-          <td colspan="5">
+          <td colspan="7">
             <div id="withdraw-status-${id}" class="status-message">
               <p style='color: white;'>Đang rút lại đề xuất, vui lòng đợi...</p>
             </div>

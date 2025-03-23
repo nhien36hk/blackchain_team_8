@@ -36,6 +36,8 @@ contract VotingSystem {
         bool isApproved;
         string rejectionReason;
         uint[] candidateIds;
+        uint256 createdDate;      // Thời gian tạo đề xuất
+        uint256 processedDate;    // Thời gian xử lý đề xuất (chấp nhận/từ chối)
     }
 
         // Các biến lưu trữ
@@ -164,7 +166,9 @@ contract VotingSystem {
             proposedEndDate: _endDate,
             isApproved: false,
             rejectionReason: "",
-            candidateIds: _candidateIds
+            candidateIds: _candidateIds,
+            createdDate: block.timestamp,
+            processedDate: 0
         });
         
         // Đánh dấu ứng viên đang trong đề xuất (ID đề xuất + 1000000)
@@ -184,6 +188,9 @@ contract VotingSystem {
         require(!proposal.isApproved, "Đề xuất đã được phê duyệt trước đó");
         
         proposal.isApproved = true;
+        
+        // Cập nhật thời gian xử lý
+        proposal.processedDate = block.timestamp;
         
         // Tạo cuộc bầu cử mới từ đề xuất đã được phê duyệt
         countElections++;
@@ -224,6 +231,9 @@ contract VotingSystem {
         
         proposal.rejectionReason = _reason;
         
+        // Cập nhật thời gian xử lý
+        proposal.processedDate = block.timestamp;
+        
         // Giải phóng các ứng viên thuộc đề xuất bị từ chối
         for (uint i = 0; i < proposal.candidateIds.length; i++) {
             uint candidateId = proposal.candidateIds[i];
@@ -244,8 +254,8 @@ contract VotingSystem {
         uint activeCount = 0;
         for (uint i = 1; i <= countElections; i++) {
             if (elections[i].isActive && 
-                elections[i].startDate <= now && 
-                elections[i].endDate > now) {
+                elections[i].startDate <= block.timestamp && 
+                elections[i].endDate > block.timestamp) {
                 activeCount++;
             }
         }
@@ -256,14 +266,27 @@ contract VotingSystem {
         
         for (uint i = 1; i <= countElections; i++) {
             if (elections[i].isActive && 
-                elections[i].startDate <= now && 
-                elections[i].endDate > now) {
+                elections[i].startDate <= block.timestamp && 
+                elections[i].endDate > block.timestamp) {
                 activeElections[currentIndex] = i;
                 currentIndex++;
             }
         }
         
         return activeElections;
+    }
+    
+    // Lấy danh sách tất cả các cuộc bầu cử (bao gồm cả đã kết thúc)
+    function getAllElections() public view returns (uint[] memory) {
+        // Tạo mảng chứa tất cả ID cuộc bầu cử
+        uint[] memory allElections = new uint[](countElections);
+        
+        // Lấy tất cả ID cuộc bầu cử từ 1 đến countElections
+        for (uint i = 1; i <= countElections; i++) {
+            allElections[i-1] = i;
+        }
+        
+        return allElections;
     }
     
     // Kiểm tra xem người dùng đã bỏ phiếu trong cuộc bầu cử chưa
@@ -280,8 +303,8 @@ contract VotingSystem {
         
         // Kiểm tra cuộc bầu cử đang diễn ra
         require(election.isActive, "Cuộc bầu cử không hoạt động");
-        require(election.startDate <= now, "Cuộc bầu cử chưa bắt đầu");
-        require(election.endDate > now, "Cuộc bầu cử đã kết thúc");
+        require(election.startDate <= block.timestamp, "Cuộc bầu cử chưa bắt đầu");
+        require(election.endDate > block.timestamp, "Cuộc bầu cử đã kết thúc");
         
         // Kiểm tra người dùng chưa bỏ phiếu
         require(!election.hasVoted[msg.sender], "Bạn đã bỏ phiếu trong cuộc bầu cử này");
@@ -393,6 +416,7 @@ contract VotingSystem {
         
         // Lấy các ID đề xuất đang chờ
         for (uint i = 1; i <= proposalCount; i++) {
+            // isApproved == false chưa được xử lý || rejectionReason chưa có lý do
             if (!proposals[i].isApproved && bytes(proposals[i].rejectionReason).length == 0) {
                 pendingProposals[currentIndex] = i;
                 currentIndex++;
@@ -412,7 +436,9 @@ contract VotingSystem {
         uint256 endDate,
         bool isApproved,
         string memory rejectionReason,
-        uint candidateCount
+        uint candidateCount,
+        uint256 createdDate,
+        uint256 processedDate
     ) {
         require(_proposalId > 0 && _proposalId <= proposalCount, "ID đề xuất không hợp lệ");
         ElectionProposal storage proposal = proposals[_proposalId];
@@ -426,7 +452,9 @@ contract VotingSystem {
             proposal.proposedEndDate,
             proposal.isApproved,
             proposal.rejectionReason,
-            proposal.candidateIds.length
+            proposal.candidateIds.length,
+            proposal.createdDate,
+            proposal.processedDate
         );
     }
     
@@ -443,7 +471,7 @@ contract VotingSystem {
 
     // Thiết lập ngày bắt đầu và kết thúc bỏ phiếu (cho tương thích với Voting.sol cũ)
     function setDates(uint256 _startDate, uint256 _endDate) public onlyAdmin {
-        require((votingEnd == 0) && (votingStart == 0) && (_startDate + 1000000 > now) && (_endDate > _startDate), 
+        require((votingEnd == 0) && (votingStart == 0) && (_startDate + 1000000 > block.timestamp) && (_endDate > _startDate), 
                 "Điều kiện cài đặt ngày không hợp lệ");
         votingEnd = _endDate;
         votingStart = _startDate;

@@ -383,6 +383,16 @@ async function getAllProposals() {
                         }
                     }
                     
+                    // Lấy thời gian tạo và xử lý từ blockchain hoặc thiết lập giá trị mặc định
+                    // Ví dụ: thời gian tạo có thể là thời gian hiện tại nếu không có trong smart contract
+                    const createdDate = proposalDetails.createdDate || Math.floor(Date.now() / 1000) - 86400; // Mặc định là 1 ngày trước
+                    
+                    // Thời gian xử lý: nếu đã được phê duyệt hoặc từ chối thì có thời gian xử lý
+                    let processedDate = null;
+                    if (proposalDetails.isApproved || proposalDetails.rejectionReason) {
+                        processedDate = proposalDetails.processedDate || Math.floor(Date.now() / 1000) - 3600; // Mặc định là 1 giờ trước
+                    }
+                    
                     // Chuyển đổi dữ liệu từ hợp đồng sang định dạng dễ đọc
                     return {
                         id: id,
@@ -391,8 +401,10 @@ async function getAllProposals() {
                         proposer: proposalDetails.proposer,
                         startDate: proposalDetails.startDate,
                         endDate: proposalDetails.endDate,
-                        status: proposalDetails.isApproved ? 1 : 0,
-                        rejectionReason: proposalDetails.rejectionReason
+                        status: proposalDetails.isApproved ? 1 : (proposalDetails.rejectionReason ? 2 : 0),
+                        rejectionReason: proposalDetails.rejectionReason,
+                        createdDate: createdDate,
+                        processedDate: processedDate
                     };
                 } catch (error) {
                     console.error(`Lỗi khi lấy chi tiết đề xuất ${id}:`, error);

@@ -99,6 +99,16 @@ app.get('/css/commission.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'src/css/commission.css'));
 });
 
+// Route cho CSS của trang Commission Intro
+app.get('/css/commission-intro.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/css/commission-intro.css'));
+});
+
+// Route cho thư mục components
+app.get('/html/components/:file', (req, res) => {
+  res.sendFile(path.join(__dirname, `src/html/components/${req.params.file}`));
+});
+
 // Route cho controller của Commission
 app.get('/js/controllers/commission-controller.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'src/js/controllers/commission-controller.js'));

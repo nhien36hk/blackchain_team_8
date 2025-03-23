@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="../css/commission.css">
+    <link rel="stylesheet" href="../css/commission-intro.css">
     <meta name="description" content="Hệ thống bầu cử phi tập trung - Trang quản lý của Ủy ban bầu cử">
 </head>
 <body>
@@ -27,6 +28,11 @@
             </div>
 
             <ul class="list-unstyled components">
+                <li id="intro-menu-item">
+                    <a href="#" id="intro-link">
+                        <i class="fas fa-info-circle"></i> Giới Thiệu
+                    </a>
+                </li>
                 <li class="active" id="proposals-menu-item">
                     <a href="#proposalSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                         <i class="fas fa-clipboard-list"></i> Đề Xuất
@@ -114,6 +120,11 @@
                 await CommissionController.initCommissionPage();
                 
                 // Đăng ký sự kiện cho các menu
+                document.getElementById('intro-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    CommissionController.showIntroduction();
+                });
+                
                 document.getElementById('pending-proposals-link').addEventListener('click', (e) => {
                     e.preventDefault();
                     CommissionController.showPendingProposals();
@@ -139,6 +150,18 @@
                 // Toggle sidebar
                 document.getElementById('sidebarCollapse').addEventListener('click', () => {
                     document.getElementById('sidebar').classList.toggle('active');
+                });
+                
+                // Xử lý các nút trong trang giới thiệu
+                document.addEventListener('click', (e) => {
+                    // Xử lý các nút trong trang giới thiệu
+                    if (e.target && e.target.id === 'view-pending-proposals' || 
+                        (e.target.parentElement && e.target.parentElement.id === 'view-pending-proposals')) {
+                        CommissionController.showPendingProposals();
+                    } else if (e.target && e.target.id === 'view-proposal-history' || 
+                        (e.target.parentElement && e.target.parentElement.id === 'view-proposal-history')) {
+                        CommissionController.showProcessedProposals();
+                    }
                 });
                 
             } catch (error) {

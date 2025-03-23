@@ -15,14 +15,6 @@ let currentProposalId = null;
  */
 async function initCommissionPage() {
     try {
-        // Kiểm tra xem người dùng có phải là thành viên Ủy ban không
-        // const isCommission = await CommissionService.isCommissionMember();
-        // if (!isCommission) {
-        //     alert('Bạn không có quyền truy cập trang Ủy ban bầu cử!');
-        //     window.location.href = 'login.html';
-        //     return;
-        // }
-
         // Lấy địa chỉ ví và hiển thị
         const account = await AccountService.getCurrentAccount();
         document.getElementById('commission-address').textContent = account;
@@ -30,8 +22,22 @@ async function initCommissionPage() {
         // Hiển thị số lượng đề xuất chờ phê duyệt
         await updatePendingCount();
 
-        // Hiển thị danh sách đề xuất chờ phê duyệt mặc định
-        await showPendingProposals();
+        // Hiển thị trang giới thiệu khi mới vào thay vì danh sách đề xuất
+        await showIntroduction();
+
+        // Thêm event listener cho các nút trong trang giới thiệu
+        setTimeout(() => {
+            const viewPendingBtn = document.getElementById('view-pending-proposals');
+            const viewHistoryBtn = document.getElementById('view-proposal-history');
+
+            if (viewPendingBtn) {
+                viewPendingBtn.addEventListener('click', showPendingProposals);
+            }
+
+            if (viewHistoryBtn) {
+                viewHistoryBtn.addEventListener('click', showProcessedProposals);
+            }
+        }, 500); // Đợi 500ms để đảm bảo DOM đã được cập nhật
 
     } catch (error) {
         console.error('Lỗi khởi tạo trang Ủy ban:', error);
@@ -44,9 +50,10 @@ async function initCommissionPage() {
  */
 async function updatePendingCount() {
     try {
+        // Lấy danh sách chưa được xử lý 
         const pendingProposals = await CommissionService.getPendingProposals();
         const pendingCount = pendingProposals.length;
-        
+
         // Cập nhật badge hiển thị số lượng
         const pendingBadge = document.getElementById('pending-count');
         if (pendingBadge) {
@@ -65,10 +72,10 @@ async function showPendingProposals() {
     try {
         // Thay đổi UI hiển thị đang chọn mục này
         setActiveMenu('pending-proposals');
-        
+
         const pendingProposals = await CommissionService.getPendingProposals();
         const contentArea = document.getElementById('content-area');
-        
+
         if (pendingProposals.length === 0) {
             contentArea.innerHTML = `
                 <div class="no-data-container">
@@ -81,7 +88,7 @@ async function showPendingProposals() {
             `;
             return;
         }
-        
+
         // Hiển thị danh sách đề xuất
         let html = `
             <div class="content-header">
@@ -90,7 +97,7 @@ async function showPendingProposals() {
             </div>
             <div class="proposal-list">
         `;
-        
+
         pendingProposals.forEach(proposal => {
             html += `
                 <div class="proposal-card" onclick="viewProposalDetails('${proposal.id}')">
@@ -100,6 +107,7 @@ async function showPendingProposals() {
                     </div>
                     <div class="proposal-details">
                         <p><strong>Người đề xuất:</strong> ${proposal.proposer}</p>
+                        <p><strong>Ngày đề xuất:</strong> ${proposal.createdDate}</p>
                         <p><strong>Mô tả:</strong> ${proposal.description.substring(0, 100)}${proposal.description.length > 100 ? '...' : ''}</p>
                     </div>
                     <div class="proposal-footer">
@@ -110,7 +118,7 @@ async function showPendingProposals() {
                 </div>
             `;
         });
-        
+
         html += `</div>`;
         contentArea.innerHTML = html;
     } catch (error) {
@@ -133,10 +141,10 @@ async function showProcessedProposals() {
     try {
         // Thay đổi UI hiển thị đang chọn mục này
         setActiveMenu('processed-proposals');
-        
+
         const processedProposals = await CommissionService.getProcessedProposals();
         const contentArea = document.getElementById('content-area');
-        
+
         if (processedProposals.length === 0) {
             contentArea.innerHTML = `
                 <div class="no-data-container">
@@ -149,7 +157,7 @@ async function showProcessedProposals() {
             `;
             return;
         }
-        
+
         // Hiển thị danh sách đề xuất đã xử lý
         let html = `
             <div class="content-header">
@@ -158,11 +166,11 @@ async function showProcessedProposals() {
             </div>
             <div class="proposal-list">
         `;
-        
+
         processedProposals.forEach(proposal => {
             const statusClass = proposal.status === 'Đã phê duyệt' ? 'status-approved' : 'status-rejected';
             const statusIcon = proposal.status === 'Đã phê duyệt' ? 'fa-check-circle' : 'fa-times-circle';
-            
+
             html += `
                 <div class="proposal-card" onclick="viewProposalDetails('${proposal.id}')">
                     <div class="proposal-header">
@@ -173,8 +181,7 @@ async function showProcessedProposals() {
                     </div>
                     <div class="proposal-details">
                         <p><strong>Người đề xuất:</strong> ${proposal.proposer}</p>
-                        <p><strong>Ngày đề xuất:</strong> ${proposal.proposalDate}</p>
-                        <p><strong>Xử lý bởi:</strong> ${proposal.processedBy || 'Không có thông tin'}</p>
+                        <p><strong>Ngày đề xuất:</strong> ${proposal.createdDate}</p>
                         <p><strong>Ngày xử lý:</strong> ${proposal.processedDate || 'Không có thông tin'}</p>
                     </div>
                     <div class="proposal-footer">
@@ -185,7 +192,7 @@ async function showProcessedProposals() {
                 </div>
             `;
         });
-        
+
         html += `</div>`;
         contentArea.innerHTML = html;
     } catch (error) {
@@ -210,10 +217,12 @@ async function viewProposalDetails(proposalId) {
         currentProposalId = proposalId;
         const proposal = await CommissionService.getProposalDetails(proposalId);
         const contentArea = document.getElementById('content-area');
-        
+
         // Kiểm tra trạng thái để hiển thị nút thích hợp
         const isPending = proposal.status === 'Chờ phê duyệt';
-        
+
+        const createdDate = proposal.createdDate || "N/A";
+
         let html = `
             <div class="content-header">
                 <button class="btn btn-secondary btn-sm back-button" onclick="goBack()">
@@ -239,8 +248,8 @@ async function viewProposalDetails(proposalId) {
                         <div class="detail-value">${proposal.proposer}</div>
                     </div>
                     <div class="detail-row">
-               
-                        <div class="detail-value">${proposal.proposalDate}</div>
+                        <div class="detail-label">Ngày đề xuất:</div>
+                        <div class="detail-value">${createdDate}</div>
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Mô tả cuộc bầu cử:</div>
@@ -321,7 +330,7 @@ async function viewProposalDetails(proposalId) {
             </div>
             ` : ''}
         `;
-        
+
         contentArea.innerHTML = html;
     } catch (error) {
         console.error('Lỗi khi hiển thị chi tiết đề xuất:', error);
@@ -344,10 +353,10 @@ async function showApprovedElections() {
     try {
         // Thay đổi UI hiển thị đang chọn mục này
         setActiveMenu('approved-elections');
-        
+
         const approvedElections = await CommissionService.getApprovedElections();
         const contentArea = document.getElementById('content-area');
-        
+
         if (approvedElections.length === 0) {
             contentArea.innerHTML = `
                 <div class="no-data-container">
@@ -360,7 +369,7 @@ async function showApprovedElections() {
             `;
             return;
         }
-        
+
         // Hiển thị danh sách cuộc bầu cử
         let html = `
             <div class="content-header">
@@ -369,12 +378,12 @@ async function showApprovedElections() {
             </div>
             <div class="election-list">
         `;
-        
+
         approvedElections.forEach(election => {
             const now = new Date().getTime();
             const startTime = new Date(election.startTime).getTime();
             const endTime = new Date(election.endTime).getTime();
-            
+
             let statusClass, statusText;
             if (now < startTime) {
                 statusClass = 'status-upcoming';
@@ -386,11 +395,11 @@ async function showApprovedElections() {
                 statusClass = 'status-ended';
                 statusText = 'Đã kết thúc';
             }
-            
+
             html += `
                 <div class="election-card" onclick="viewElectionDetails('${election.id}')">
                     <div class="election-header">
-                        <h4>${election.title}</h4>
+                        <h4>${election.name}</h4>
                         <span class="election-status ${statusClass}">${statusText}</span>
                     </div>
                     <div class="election-details">
@@ -407,7 +416,7 @@ async function showApprovedElections() {
                 </div>
             `;
         });
-        
+
         html += `</div>`;
         contentArea.innerHTML = html;
     } catch (error) {
@@ -436,7 +445,7 @@ function setActiveMenu(menuId) {
                 item.classList.remove('active');
             });
         }
-        
+
         // Active menu item hiện tại dựa trên menuId
         if (menuId === 'pending-proposals') {
             // Kích hoạt menu cha (proposals-menu-item)
@@ -444,11 +453,16 @@ function setActiveMenu(menuId) {
             if (parentMenu) {
                 parentMenu.classList.add('active');
             }
-            
+
             // Kích hoạt menu con (pending-proposals-menu-item)
             const pendingItem = document.getElementById('pending-proposals-menu-item');
             if (pendingItem) {
                 pendingItem.classList.add('active');
+            }
+        } else if (menuId == 'intro-menu-item') {
+            const parentMenu = document.getElementById('intro-menu-item');
+            if (parentMenu) {
+                parentMenu.classList.add('active');
             }
         } else if (menuId === 'processed-proposals') {
             // Kích hoạt menu cha (proposals-menu-item)
@@ -456,7 +470,7 @@ function setActiveMenu(menuId) {
             if (parentMenu) {
                 parentMenu.classList.add('active');
             }
-            
+
             // Kích hoạt menu con (processed-proposals-menu-item)
             const processedItem = document.getElementById('processed-proposals-menu-item');
             if (processedItem) {
@@ -485,13 +499,13 @@ function goBack() {
             showPendingProposals();
             return;
         }
-        
+
         const processedItem = document.getElementById('processed-proposals-menu-item');
         if (processedItem && processedItem.classList.contains('active')) {
             showProcessedProposals();
             return;
         }
-        
+
         // Mặc định quay về danh sách cuộc bầu cử đã phê duyệt
         showApprovedElections();
     } catch (error) {
@@ -524,10 +538,10 @@ async function approveProposal(proposalId) {
         if (!confirm('Bạn có chắc chắn muốn phê duyệt đề xuất này không?')) {
             return;
         }
-        
+
         await CommissionService.approveProposal(proposalId);
         alert('Đề xuất đã được phê duyệt thành công!');
-        
+
         // Cập nhật UI
         await updatePendingCount();
         await showPendingProposals();
@@ -543,16 +557,16 @@ async function approveProposal(proposalId) {
 async function rejectProposal() {
     try {
         const rejectionReason = document.getElementById('rejection-reason').value.trim();
-        
+
         if (!rejectionReason) {
             alert('Vui lòng nhập lý do từ chối!');
             return;
         }
-        
+
         await CommissionService.rejectProposal(currentProposalId, rejectionReason);
         closeRejectDialog();
         alert('Đề xuất đã bị từ chối thành công!');
-        
+
         // Cập nhật UI
         await updatePendingCount();
         await showPendingProposals();
@@ -571,7 +585,7 @@ async function viewElectionDetails(electionId) {
     try {
         const electionResults = await CommissionService.getElectionResults(electionId);
         const contentArea = document.getElementById('content-area');
-        
+
         let html = `
             <div class="content-header">
                 <button class="btn btn-secondary btn-sm back-button" onclick="goBack()">
@@ -640,9 +654,9 @@ async function viewElectionDetails(electionId) {
                 </div>
             </div>
         `;
-        
+
         contentArea.innerHTML = html;
-        
+
         // Tạo biểu đồ kết quả
         setTimeout(() => {
             const ctx = document.getElementById('resultsChart').getContext('2d');
@@ -692,7 +706,7 @@ async function viewElectionDetails(electionId) {
                         },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     const candidate = electionResults.candidates[context.dataIndex];
                                     return `${candidate.name}: ${candidate.voteCount} phiếu (${candidate.percentage}%)`;
                                 }
@@ -716,10 +730,107 @@ async function viewElectionDetails(electionId) {
     }
 }
 
+/**
+ * Hiển thị trang giới thiệu Ủy ban bầu cử
+ */
+async function showIntroduction() {
+    try {
+        // Không đánh dấu mục menu nào là active
+        clearActiveMenu();
+
+        setActiveMenu('intro-menu-item');
+
+        const contentArea = document.getElementById('content-area');
+        contentArea.innerHTML = '<div class="loading-container"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+
+        try {
+            // Tải nội dung từ file HTML riêng - Sửa đường dẫn phù hợp với route mới
+            const response = await fetch('/html/components/commission-intro.html');
+            if (!response.ok) {
+                throw new Error(`Không thể tải trang giới thiệu: ${response.status}`);
+            }
+
+            const html = await response.text();
+            contentArea.innerHTML = html;
+        } catch (error) {
+            // Nếu không tải được file HTML, hiển thị nội dung trực tiếp
+            console.warn('Không thể tải file HTML, hiển thị nội dung trực tiếp:', error);
+            contentArea.innerHTML = `
+            <!-- Giới thiệu về Ủy ban Bầu cử -->
+            <div class="commission-intro-container">
+              <!-- Header -->
+              <div class="intro-header">
+                <div class="intro-header-icon">
+                  <i class="fas fa-balance-scale"></i>
+                </div>
+                <h1>Ủy Ban Bầu Cử</h1>
+                <div class="intro-subtitle">Đảm bảo tính minh bạch và công bằng cho hệ thống bầu cử blockchain</div>
+              </div>
+
+              <div class="intro-card">
+                <div class="card-header">
+                  <i class="fas fa-info-circle"></i>
+                  <h2>Giới Thiệu Chung</h2>
+                </div>
+                <div class="card-content">
+                  <p>Ủy ban Bầu cử là cơ quan có trách nhiệm đảm bảo các cuộc bầu cử được tổ chức minh bạch, công bằng và đúng quy định trên nền tảng blockchain.</p>
+                  
+                  <div class="start-actions">
+                    <button id="view-pending-proposals" class="btn btn-primary">
+                      <i class="fas fa-list-alt"></i> Xem đề xuất chờ phê duyệt
+                    </button>
+                    <button id="view-proposal-history" class="btn btn-secondary">
+                      <i class="fas fa-history"></i> Xem lịch sử phê duyệt
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            `;
+
+            // Thêm event listener cho các nút
+            setTimeout(() => {
+                const viewPendingBtn = document.getElementById('view-pending-proposals');
+                const viewHistoryBtn = document.getElementById('view-proposal-history');
+
+                if (viewPendingBtn) {
+                    viewPendingBtn.addEventListener('click', showPendingProposals);
+                }
+
+                if (viewHistoryBtn) {
+                    viewHistoryBtn.addEventListener('click', showProcessedProposals);
+                }
+            }, 100);
+        }
+    } catch (error) {
+        console.error('Lỗi khi hiển thị trang giới thiệu:', error);
+        const contentArea = document.getElementById('content-area');
+        contentArea.innerHTML = `
+            <div class="error-container">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h4>Đã xảy ra lỗi</h4>
+                <p>Không thể tải trang giới thiệu. Vui lòng thử lại sau.</p>
+                <button class="btn btn-primary" onclick="showPendingProposals()">Xem danh sách đề xuất</button>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Xóa trạng thái active của tất cả các mục menu
+ */
+function clearActiveMenu() {
+    const menuItems = document.querySelectorAll('.nav-item');
+    menuItems.forEach(item => {
+        item.classList.remove('active');
+    });
+}
+
 // Export các hàm cần thiết
 module.exports = {
     initCommissionPage,
     updatePendingCount,
+    showIntroduction,
     showPendingProposals,
     showProcessedProposals,
     viewProposalDetails,
@@ -729,5 +840,6 @@ module.exports = {
     viewElectionDetails,
     showRejectDialog,
     closeRejectDialog,
+    clearActiveMenu,
     goBack
 }; 

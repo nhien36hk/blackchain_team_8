@@ -764,12 +764,36 @@ async function getElectionResults(electionId) {
             });
         }
         
+        // Xử lý thời gian bắt đầu và kết thúc
+        let startTimeFormatted = "Không xác định";
+        let endTimeFormatted = "Không xác định";
+        
+        try {
+            if (election.startDate) {
+                startTimeFormatted = formatDate(parseInt(election.startDate.toString()));
+            } else if (election.startTime) {
+                startTimeFormatted = formatDate(parseInt(election.startTime.toString()));
+            }
+        } catch (e) {
+            console.warn("Lỗi khi xử lý thời gian bắt đầu cuộc bầu cử:", e);
+        }
+        
+        try {
+            if (election.endDate) {
+                endTimeFormatted = formatDate(parseInt(election.endDate.toString()));
+            } else if (election.endTime) {
+                endTimeFormatted = formatDate(parseInt(election.endTime.toString()));
+            }
+        } catch (e) {
+            console.warn("Lỗi khi xử lý thời gian kết thúc cuộc bầu cử:", e);
+        }
+        
         return {
             id: electionId,
             title: election.name || election.title || `Cuộc bầu cử ${electionId}`,
             description: election.description || 'Không có mô tả',
-            startTime: formatDate(election.startDate || election.startTime),
-            endTime: formatDate(election.endDate || election.endTime),
+            startTime: startTimeFormatted,
+            endTime: endTimeFormatted,
             status: getElectionStatus(election),
             candidates: candidates,
             totalVotes: totalVotes
@@ -843,16 +867,48 @@ function formatDate(date) {
  * @returns {string} Trạng thái cuộc bầu cử
  */
 function getElectionStatus(election) {
-    const now = Math.floor(Date.now() / 1000);
-    const startTime = parseInt(election.startDate || election.startTime);
-    const endTime = parseInt(election.endDate || election.endTime);
-    
-    if (now < startTime) {
-        return "Sắp diễn ra";
-    } else if (now > endTime || !election.isActive) {
-        return "Đã kết thúc";
-    } else {
-        return "Đang diễn ra";
+    try {
+        if (!election) return "Không xác định";
+        
+        const now = Math.floor(Date.now() / 1000);
+        let startTime, endTime;
+        
+        if (election.startDate !== undefined) {
+            startTime = parseInt(election.startDate.toString());
+        } else if (election.startTime !== undefined) {
+            startTime = parseInt(election.startTime.toString());
+        } else {
+            startTime = now - 86400; // Mặc định là 1 ngày trước
+        }
+        
+        if (election.endDate !== undefined) {
+            endTime = parseInt(election.endDate.toString());
+        } else if (election.endTime !== undefined) {
+            endTime = parseInt(election.endTime.toString());
+        } else {
+            endTime = now + 86400; // Mặc định là 1 ngày sau
+        }
+        
+        // Trạng thái isActive có ưu tiên cao nhất
+        if (election.isActive === false) {
+            return "Đã kết thúc";
+        }
+        
+        // Kiểm tra thời gian
+        if (isNaN(startTime) || isNaN(endTime)) {
+            return "Không xác định";
+        }
+        
+        if (now < startTime) {
+            return "Sắp diễn ra";
+        } else if (now > endTime) {
+            return "Đã kết thúc";
+        } else {
+            return "Đang diễn ra";
+        }
+    } catch (error) {
+        console.error("Lỗi khi xác định trạng thái cuộc bầu cử:", error);
+        return "Không xác định";
     }
 }
 
@@ -918,27 +974,36 @@ function formatProposal(id, proposal) {
     
     try {
         // Chuyển đổi timestamp thành ngày có thể đọc được
-        let proposalDate = 'Không xác định';
+        let createdDate = 'Không xác định';
         let startTime = 'Không xác định';
         let endTime = 'Không xác định';
         let processedDate = 'Không xác định';
 
-        // Xử lý ngày đề xuất
-        if (proposal.proposalDate) {
+        // Xử lý ngày tạo đề xuất
+        if (proposal.createdDate) {
             try {
-                const timestamp = parseInt(proposal.proposalDate.toString());
+                const timestamp = parseInt(proposal.createdDate.toString());
                 if (!isNaN(timestamp) && timestamp > 0) {
-                    proposalDate = new Date(timestamp * 1000).toLocaleString('vi-VN');
+                    createdDate = new Date(timestamp * 1000).toLocaleString('vi-VN');
                 }
             } catch (e) {
-                console.warn('Lỗi khi chuyển đổi ngày đề xuất:', e);
+                console.warn('Lỗi khi chuyển đổi ngày tạo đề xuất:', e);
             }
         }
 
         // Xử lý thời gian bắt đầu
-        if (proposal.startTime || proposal.startDate) {
+        if (proposal.startDate) {
             try {
-                const timestamp = parseInt((proposal.startTime || proposal.startDate).toString());
+                const timestamp = parseInt(proposal.startDate.toString());
+                if (!isNaN(timestamp) && timestamp > 0) {
+                    startTime = new Date(timestamp * 1000).toLocaleString('vi-VN');
+                }
+            } catch (e) {
+                console.warn('Lỗi khi chuyển đổi thời gian bắt đầu:', e);
+            }
+        } else if (proposal.proposedStartDate) {
+            try {
+                const timestamp = parseInt(proposal.proposedStartDate.toString());
                 if (!isNaN(timestamp) && timestamp > 0) {
                     startTime = new Date(timestamp * 1000).toLocaleString('vi-VN');
                 }
@@ -948,9 +1013,18 @@ function formatProposal(id, proposal) {
         }
 
         // Xử lý thời gian kết thúc
-        if (proposal.endTime || proposal.endDate) {
+        if (proposal.endDate) {
             try {
-                const timestamp = parseInt((proposal.endTime || proposal.endDate).toString());
+                const timestamp = parseInt(proposal.endDate.toString());
+                if (!isNaN(timestamp) && timestamp > 0) {
+                    endTime = new Date(timestamp * 1000).toLocaleString('vi-VN');
+                }
+            } catch (e) {
+                console.warn('Lỗi khi chuyển đổi thời gian kết thúc:', e);
+            }
+        } else if (proposal.proposedEndDate) {
+            try {
+                const timestamp = parseInt(proposal.proposedEndDate.toString());
                 if (!isNaN(timestamp) && timestamp > 0) {
                     endTime = new Date(timestamp * 1000).toLocaleString('vi-VN');
                 }
@@ -995,7 +1069,7 @@ function formatProposal(id, proposal) {
             title: proposal.title || proposal.name || `Đề xuất ${id}`,
             description: proposal.description || 'Không có mô tả',
             proposer: proposal.proposer || 'Không xác định',
-            proposalDate: proposalDate,
+            createdDate: createdDate,
             startTime: startTime,
             endTime: endTime,
             status: status,
@@ -1016,27 +1090,74 @@ function formatProposal(id, proposal) {
  * @returns {Object} Cuộc bầu cử đã định dạng
  */
 function formatElection(id, election) {
-    const now = new Date();
-    const startTime = new Date(parseInt(election.startTime) * 1000);
-    const endTime = new Date(parseInt(election.endTime) * 1000);
-    
-    let status = 'upcoming';
-    if (now >= startTime && now <= endTime) {
-        status = 'active';
-    } else if (now > endTime) {
-        status = 'completed';
+    try {
+        const now = new Date();
+        let startTime, endTime;
+        
+        // Xử lý thời gian bắt đầu
+        try {
+            if (election.startDate) {
+                startTime = new Date(parseInt(election.startDate.toString()) * 1000);
+            } else if (election.startTime) {
+                startTime = new Date(parseInt(election.startTime.toString()) * 1000);
+            } else {
+                console.warn(`Cuộc bầu cử ${id} không có thời gian bắt đầu hợp lệ`);
+                startTime = now; // Mặc định là hiện tại
+            }
+        } catch (e) {
+            console.warn(`Lỗi khi xử lý thời gian bắt đầu cuộc bầu cử ${id}:`, e);
+            startTime = now;
+        }
+        
+        // Xử lý thời gian kết thúc
+        try {
+            if (election.endDate) {
+                endTime = new Date(parseInt(election.endDate.toString()) * 1000);
+            } else if (election.endTime) {
+                endTime = new Date(parseInt(election.endTime.toString()) * 1000);
+            } else {
+                console.warn(`Cuộc bầu cử ${id} không có thời gian kết thúc hợp lệ`);
+                endTime = new Date(now.getTime() + 86400000); // Mặc định là 1 ngày sau
+            }
+        } catch (e) {
+            console.warn(`Lỗi khi xử lý thời gian kết thúc cuộc bầu cử ${id}:`, e);
+            endTime = new Date(now.getTime() + 86400000);
+        }
+        
+        // Xác định trạng thái
+        let status = 'upcoming';
+        if (now >= startTime && now <= endTime) {
+            status = 'active';
+        } else if (now > endTime) {
+            status = 'completed';
+        }
+        
+        return {
+            id: id,
+            name: election.name,
+            description: election.description,
+            startTime: startTime,
+            endTime: endTime,
+            status: status,
+            creator: election.creator,
+            isActive: election.isActive
+        };
+    } catch (error) {
+        console.error(`Lỗi khi định dạng cuộc bầu cử ${id}:`, error);
+        // Trả về dữ liệu mặc định an toàn
+        const now = new Date();
+        return {
+            id: id,
+            name: `Cuộc bầu cử ${id}`,
+            description: 'Không thể lấy thông tin chi tiết',
+            startTime: now,
+            endTime: new Date(now.getTime() + 86400000),
+            status: 'unknown',
+            creator: 'Không xác định',
+            isActive: false,
+            hasError: true
+        };
     }
-    
-    return {
-        id: id,
-        name: election.name,
-        description: election.description,
-        startTime: startTime,
-        endTime: endTime,
-        status: status,
-        creator: election.creator,
-        isActive: election.isActive
-    };
 }
 
 /**
