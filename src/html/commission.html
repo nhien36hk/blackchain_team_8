@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link rel="stylesheet" href="../css/commission-intro.css">
     <meta name="description" content="Hệ thống bầu cử phi tập trung - Trang quản lý của Ủy ban bầu cử">
 </head>
+
 <body>
     <div class="commission-background"></div>
     <div class="wrapper">
@@ -40,7 +42,8 @@
                     <ul class="collapse list-unstyled" id="proposalSubmenu">
                         <li id="pending-proposals-menu-item">
                             <a href="#" id="pending-proposals-link" onclick="viewProposalDetails(this)">
-                                <i class="fas fa-hourglass-half"></i> Chờ Phê Duyệt <span id="pending-count" class="badge badge-warning">0</span>
+                                <i class="fas fa-hourglass-half"></i> Chờ Phê Duyệt <span id="pending-count"
+                                    class="badge badge-warning">0</span>
                             </a>
                         </li>
                         <li id="processed-proposals-menu-item">
@@ -49,11 +52,6 @@
                             </a>
                         </li>
                     </ul>
-                </li>
-                <li id="approved-elections-menu-item">
-                    <a href="#" id="approved-elections-link" onclick="viewElectionDetails(this)">
-                        <i class="fas fa-vote-yea"></i> Cuộc Bầu Cử Đã Phê Duyệt
-                    </a>
                 </li>
                 <li id="logout-menu-item">
                     <a href="#" id="logout-link">
@@ -115,63 +113,58 @@
                     alert('Không thể tải controller. Vui lòng làm mới trang.');
                     return;
                 }
-                
+
                 // Khởi tạo trang
                 await CommissionController.initCommissionPage();
-                
+
                 // Đăng ký sự kiện cho các menu
                 document.getElementById('intro-link').addEventListener('click', (e) => {
                     e.preventDefault();
                     CommissionController.showIntroduction();
                 });
-                
+
                 document.getElementById('pending-proposals-link').addEventListener('click', (e) => {
                     e.preventDefault();
                     CommissionController.showPendingProposals();
                 });
-                
+
                 document.getElementById('processed-proposals-link').addEventListener('click', (e) => {
                     e.preventDefault();
                     CommissionController.showProcessedProposals();
                 });
-                
-                document.getElementById('approved-elections-link').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    CommissionController.showApprovedElections();
-                });
-                
+
                 document.getElementById('logout-link').addEventListener('click', (e) => {
                     e.preventDefault();
                     if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
                         window.location.href = 'login.html';
                     }
                 });
-                
+
                 // Toggle sidebar
                 document.getElementById('sidebarCollapse').addEventListener('click', () => {
                     document.getElementById('sidebar').classList.toggle('active');
                 });
-                
+
                 // Xử lý các nút trong trang giới thiệu
                 document.addEventListener('click', (e) => {
                     // Xử lý các nút trong trang giới thiệu
-                    if (e.target && e.target.id === 'view-pending-proposals' || 
+                    if (e.target && e.target.id === 'view-pending-proposals' ||
                         (e.target.parentElement && e.target.parentElement.id === 'view-pending-proposals')) {
                         CommissionController.showPendingProposals();
-                    } else if (e.target && e.target.id === 'view-proposal-history' || 
+                    } else if (e.target && e.target.id === 'view-proposal-history' ||
                         (e.target.parentElement && e.target.parentElement.id === 'view-proposal-history')) {
                         CommissionController.showProcessedProposals();
                     }
                 });
-                
+
             } catch (error) {
                 console.error('Lỗi khởi tạo trang Ủy ban:', error);
                 alert('Có lỗi xảy ra khi tải trang Ủy ban bầu cử. Vui lòng thử lại sau.');
             }
         });
-        
+
         // Thêm các hàm cần thiết vào window để có thể gọi từ HTML
-        window.viewProposalDetails = function(elem) {
+        window.viewProposalDetails = function (elem) {
             if (elem && elem.id) {
                 if (elem.id === 'pending-proposals-link') {
                     if (CommissionController && CommissionController.showPendingProposals) {
@@ -190,56 +183,40 @@
                 console.error('Tham số không hợp lệ hoặc hàm viewProposalDetails không tồn tại');
             }
         };
-        
-        window.viewElectionDetails = function(elem) {
-            if (elem && elem.id) {
-                if (elem.id === 'approved-elections-link') {
-                    if (CommissionController && CommissionController.showApprovedElections) {
-                        CommissionController.showApprovedElections();
-                    }
-                } else if (CommissionController && CommissionController.viewElectionDetails) {
-                    CommissionController.viewElectionDetails(elem);
-                }
-            } else if (typeof elem === 'string' && CommissionController && CommissionController.viewElectionDetails) {
-                CommissionController.viewElectionDetails(elem);
-            } else {
-                console.error('Tham số không hợp lệ hoặc hàm viewElectionDetails không tồn tại');
-            }
-        };
-        
-        window.approveProposal = function(proposalId) {
+
+        window.approveProposal = function (proposalId) {
             if (CommissionController && CommissionController.approveProposal) {
                 CommissionController.approveProposal(proposalId);
             } else {
                 console.error('Hàm approveProposal không tồn tại');
             }
         };
-        
-        window.rejectProposal = function() {
+
+        window.rejectProposal = function () {
             if (CommissionController && CommissionController.rejectProposal) {
                 CommissionController.rejectProposal();
             } else {
                 console.error('Hàm rejectProposal không tồn tại');
             }
         };
-        
-        window.showRejectDialog = function() {
+
+        window.showRejectDialog = function () {
             if (CommissionController && CommissionController.showRejectDialog) {
                 CommissionController.showRejectDialog();
             } else {
                 console.error('Hàm showRejectDialog không tồn tại');
             }
         };
-        
-        window.closeRejectDialog = function() {
+
+        window.closeRejectDialog = function () {
             if (CommissionController && CommissionController.closeRejectDialog) {
                 CommissionController.closeRejectDialog();
             } else {
                 console.error('Hàm closeRejectDialog không tồn tại');
             }
         };
-        
-        window.goBack = function() {
+
+        window.goBack = function () {
             if (CommissionController && CommissionController.goBack) {
                 CommissionController.goBack();
             } else {
@@ -248,4 +225,5 @@
         };
     </script>
 </body>
-</html> 
+
+</html>

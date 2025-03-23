@@ -614,40 +614,10 @@ async function viewElectionDetails(electionId) {
                         <div class="detail-label">Thời gian kết thúc:</div>
                         <div class="detail-value">${electionResults.endTime}</div>
                     </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Tổng số phiếu bầu:</div>
-                        <div class="detail-value">${electionResults.totalVotes}</div>
-                    </div>
+                    
                 </div>
                 
-                <div class="candidates-results-section">
-                    <h4>Kết quả bầu cử</h4>
-                    <div class="results-container">
-                        <div class="results-chart-container">
-                            <canvas id="resultsChart"></canvas>
-                        </div>
-                        
-                        <div class="candidate-results-list">
-                            ${electionResults.candidates.map((candidate, index) => `
-                                <div class="candidate-result-card">
-                                    <div class="candidate-avatar">
-                                        <img src="${candidate.image || '../assets/default-avatar.png'}" alt="${candidate.name}">
-                                    </div>
-                                    <div class="candidate-info">
-                                        <h5>${candidate.name}</h5>
-                                        <div class="vote-info">
-                                            <div class="vote-count">${candidate.voteCount} phiếu</div>
-                                            <div class="vote-percentage">${candidate.percentage}%</div>
-                                        </div>
-                                        <div class="progress">
-                                            <div class="progress-bar" style="width: ${candidate.percentage}%" role="progressbar" aria-valuenow="${candidate.percentage}" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
+
             </div>
         `;
 
