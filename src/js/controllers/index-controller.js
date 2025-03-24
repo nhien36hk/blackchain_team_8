@@ -81,11 +81,49 @@ function initIndexController() {
   
   // Hiển thị thẻ cuộc bầu cử
   function renderElectionCard(id, electionData) {
+    // Lấy thời gian hiện tại dưới dạng UNIX timestamp (giây)
     const now = Math.floor(Date.now() / 1000);
-    const startTime = parseInt(electionData.startDate);
-    const endTime = parseInt(electionData.endDate);
     
+    // Xử lý startTime và endTime
+    let startTime, endTime;
+    
+    // Kiểm tra nếu startTime và endTime là chuỗi đã được định dạng (không phải số)
+    if (typeof electionData.startTime === 'string' && isNaN(Date.parse(electionData.startTime))) {
+      // Nếu đã là chuỗi định dạng theo locale, giữ nguyên để hiển thị
+      console.log("startTime là chuỗi đã định dạng:", electionData.startTime);
+      // Cố gắng trích xuất timestamp từ đối tượng gốc nếu có
+      startTime = electionData._startTime || 0;
+    } else {
+      // Nếu là timestamp hoặc chuỗi có thể chuyển thành Date
+      startTime = typeof electionData.startTime === 'string' ? 
+        (electionData.startTime.match(/^\d+$/) ? parseInt(electionData.startTime) : Math.floor(new Date(electionData.startTime).getTime() / 1000)) : 
+        parseInt(electionData.startTime || 0);
+    }
+    
+    if (typeof electionData.endTime === 'string' && isNaN(Date.parse(electionData.endTime))) {
+      // Nếu đã là chuỗi định dạng theo locale, giữ nguyên để hiển thị
+      console.log("endTime là chuỗi đã định dạng:", electionData.endTime);
+      // Cố gắng trích xuất timestamp từ đối tượng gốc nếu có
+      endTime = electionData._endTime || 0;
+    } else {
+      // Nếu là timestamp hoặc chuỗi có thể chuyển thành Date
+      endTime = typeof electionData.endTime === 'string' ? 
+        (electionData.endTime.match(/^\d+$/) ? parseInt(electionData.endTime) : Math.floor(new Date(electionData.endTime).getTime() / 1000)) : 
+        parseInt(electionData.endTime || 0);
+    }
+    
+    // Log để debug
+    console.log("Thời gian hiện tại (timestamp):", now);
+    console.log("Thời gian hiện tại:", new Date(now * 1000).toLocaleString('vi-VN'));
+    console.log("Thời gian bắt đầu (timestamp):", startTime);
+    console.log("Thời gian bắt đầu hiển thị:", electionData.startTime);
+    console.log("Thời gian kết thúc (timestamp):", endTime);
+    console.log("Thời gian kết thúc hiển thị:", electionData.endTime);
+    
+    // Xác định trạng thái cuộc bầu cử
     let statusClass, statusText;
+    
+    // Sử dụng timestamp để so sánh
     if (now < startTime) {
       statusClass = 'status-pending';
       statusText = 'Sắp diễn ra';
@@ -101,14 +139,14 @@ function initIndexController() {
     const electionCard = `
       <div class="election-card" data-id="${id}">
         <div class="election-card-header">
-          <h3 class="election-card-title">${electionData.title}</h3>
+          <h3 class="election-card-title">${electionData.name}</h3>
           <span class="election-card-status ${statusClass}">${statusText}</span>
         </div>
         <div class="election-card-content">
           <p class="election-card-description">${electionData.description}</p>
           <div class="election-card-time">
             <i class="fas fa-calendar-alt"></i>
-            <span>Thời gian: ${formatDate(startTime)} - ${formatDate(endTime)}</span>
+            <span>Thời gian: ${electionData.startTime} - ${electionData.endTime}</span>
           </div>
         </div>
         <div class="election-card-footer">
@@ -213,26 +251,63 @@ function initIndexController() {
   // Cập nhật thông tin cuộc bầu cử đã chọn
   function updateSelectedElectionInfo(id, electionData) {
     const now = Math.floor(Date.now() / 1000);
-    const startTime = parseInt(electionData.startDate);
-    const endTime = parseInt(electionData.endDate);
+    
+    // Xử lý startTime và endTime
+    let startTime, endTime;
+    
+    // Nếu có timestamp gốc, sử dụng nó
+    if (electionData._startTime) {
+        startTime = parseInt(electionData._startTime);
+    } else if (typeof electionData.startTime === 'string' && electionData.startTime.match(/^\d+$/)) {
+        // Nếu là chuỗi số nguyên
+        startTime = parseInt(electionData.startTime);
+    } else {
+        // Cố gắng chuyển đổi từ chuỗi định dạng
+        try {
+            startTime = Math.floor(new Date(electionData.startTime).getTime() / 1000);
+        } catch (e) {
+            console.error("Lỗi khi chuyển đổi startTime:", e);
+            startTime = 0;
+        }
+    }
+    
+    if (electionData._endTime) {
+        endTime = parseInt(electionData._endTime);
+    } else if (typeof electionData.endTime === 'string' && electionData.endTime.match(/^\d+$/)) {
+        // Nếu là chuỗi số nguyên
+        endTime = parseInt(electionData.endTime);
+    } else {
+        // Cố gắng chuyển đổi từ chuỗi định dạng
+        try {
+            endTime = Math.floor(new Date(electionData.endTime).getTime() / 1000);
+        } catch (e) {
+            console.error("Lỗi khi chuyển đổi endTime:", e);
+            endTime = 0;
+        }
+    }
+    
+    // Log để debug
+    console.log("updateSelectedElectionInfo - now:", now);
+    console.log("updateSelectedElectionInfo - startTime:", startTime);
+    console.log("updateSelectedElectionInfo - endTime:", endTime);
     
     let statusClass, statusText;
     if (now < startTime) {
-      statusClass = 'status-pending';
-      statusText = 'Sắp diễn ra';
+        statusClass = 'status-pending';
+        statusText = 'Sắp diễn ra';
     } else if (now >= startTime && now <= endTime) {
-      statusClass = 'status-active';
-      statusText = 'Đang diễn ra';
+        statusClass = 'status-active';
+        statusText = 'Đang diễn ra';
     } else {
-      statusClass = 'status-ended';
-      statusText = 'Đã kết thúc';
+        statusClass = 'status-ended';
+        statusText = 'Đã kết thúc';
     }
     
     // Cập nhật tiêu đề
-    $('#selected-election-title').text(electionData.title);
+    $('#selected-election-title').text(electionData.title || electionData.name);
     
-    // Cập nhật thời gian
-    $('#selected-election-time').text(`Thời gian: ${formatDate(startTime)} đến ${formatDate(endTime)}`);
+    // Cập nhật thời gian - hiển thị định dạng đã được format
+    $('#selected-election-time').text(`Thời gian: ${electionData.startTime} đến ${electionData.endTime}`);
     
     // Cập nhật trạng thái
     $('#selected-election-status').html(`Trạng thái: <span class="${statusClass}">${statusText}</span>`);

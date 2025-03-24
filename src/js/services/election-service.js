@@ -799,6 +799,7 @@ async function listenToVoteEvents(electionId, callback) {
  * @returns {Object} Cuộc bầu cử đã định dạng
  */
 function formatElection(id, election) {
+    // Lấy timestamp từ dữ liệu
     const now = Math.floor(Date.now() / 1000);
     const startTime = parseInt(election.startDate || election.startTime);
     const endTime = parseInt(election.endDate || election.endTime);
@@ -810,12 +811,20 @@ function formatElection(id, election) {
         status = 'completed';
     }
 
+    // Định dạng thời gian theo locale Việt Nam
+    const formattedStartTime = new Date(startTime * 1000).toLocaleString('vi-VN');
+    const formattedEndTime = new Date(endTime * 1000).toLocaleString('vi-VN');
+
     return {
         id: id,
         name: election.name,
         description: election.description,
-        startTime: new Date(startTime * 1000),
-        endTime: new Date(endTime * 1000),
+        // Lưu cả chuỗi định dạng và timestamp gốc
+        startTime: formattedStartTime,
+        endTime: formattedEndTime,
+        // Lưu timestamp gốc với tiền tố _ để sử dụng trong so sánh
+        _startTime: startTime,
+        _endTime: endTime,
         status: status,
         creator: election.creator,
         isActive: election.isActive,
@@ -865,6 +874,27 @@ async function hasVoted(electionId) {
         return false;
     }
 }
+
+// Kiểm tra đoạn code lưu thời gian bầu cử
+// Đảm bảo thời gian được lưu dưới dạng timestamp (giây)
+// ... existing code ...
+
+// Khi tạo cuộc bầu cử mới hoặc cập nhật thời gian
+function saveElection(electionData) {
+  // Đảm bảo startTime và endTime là timestamp hợp lệ 
+  // Ví dụ: chuyển đổi từ chuỗi ngày giờ sang timestamp
+  if (typeof electionData.startTime === 'string' && !(/^\d+$/.test(electionData.startTime))) {
+    electionData.startTime = Math.floor(new Date(electionData.startTime).getTime() / 1000);
+  }
+  
+  if (typeof electionData.endTime === 'string' && !(/^\d+$/.test(electionData.endTime))) {
+    electionData.endTime = Math.floor(new Date(electionData.endTime).getTime() / 1000);
+  }
+  
+  // ... phần code lưu dữ liệu
+}
+
+// ... existing code ...
 
 module.exports = {
     getAllElections,
