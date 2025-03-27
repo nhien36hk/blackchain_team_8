@@ -804,11 +804,13 @@ function formatElection(id, election) {
     const startTime = parseInt(election.startDate || election.startTime);
     const endTime = parseInt(election.endDate || election.endTime);
 
-    let status = 'upcoming';
-    if (now >= startTime && now <= endTime && election.isActive) {
-        status = 'active';
-    } else if (now > endTime || !election.isActive) {
-        status = 'completed';
+    let status = '';
+    if (now < startTime) {
+        status = 'Sắp diễn ra';
+    } else if (now >= startTime && now <= endTime) {
+        status = 'Đang diễn ra';
+    } else {
+        status = 'Đã kết thúc';
     }
 
     // Định dạng thời gian theo locale Việt Nam

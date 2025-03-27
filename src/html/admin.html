@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -329,6 +330,189 @@
       </div>
     </section>
 
+    <!-- Results Section - New -->
+    <section class="content-section" id="results-section" style="display: none;">
+      <div class="content-container">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-chart-bar"></i>
+            Kết Quả Bầu Cử
+          </h2>
+        </div>
+        
+        <!-- Election Selection Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-list-alt"></i>
+            </div>
+            <h2 class="card-title">Danh Sách Cuộc Bầu Cử</h2>
+          </div>
+          
+          <div class="card-content">
+            <div id="elections-loading" class="loading-indicator">
+              <i class="fas fa-spinner fa-spin"></i> Đang tải danh sách cuộc bầu cử...
+            </div>
+            <div id="no-elections" class="message-box" style="display: none;">
+              <div class="message-content">
+                <i class="fas fa-info-circle"></i>
+                <p>Hiện tại chưa có cuộc bầu cử nào. Vui lòng tạo đề xuất bầu cử mới.</p>
+              </div>
+            </div>
+            <div id="elections-container" class="elections-grid">
+              <!-- Danh sách cuộc bầu cử sẽ được thêm vào đây bằng JavaScript -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Election Results Card - Will be shown after selecting an election -->
+        <div id="election-results-container" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-chart-pie"></i>
+              </div>
+              <h2 class="card-title">Chi Tiết Kết Quả Bầu Cử: <span id="election-title">Tiêu đề cuộc bầu cử</span></h2>
+            </div>
+            
+            <div class="card-content">
+              <div class="election-info-card">
+                <div class="info-row">
+                  <div class="info-label"><i class="fas fa-info-circle"></i> Trạng thái:</div>
+                  <div class="info-value"><span id="election-status" class="status-badge">Đang diễn ra</span></div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label"><i class="fas fa-calendar-alt"></i> Thời gian bắt đầu:</div>
+                  <div class="info-value" id="election-start-time">DD/MM/YYYY HH:MM</div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label"><i class="fas fa-calendar-check"></i> Thời gian kết thúc:</div>
+                  <div class="info-value" id="election-end-time">DD/MM/YYYY HH:MM</div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label"><i class="fas fa-align-left"></i> Mô tả:</div>
+                  <div class="info-value" id="election-description">Mô tả cuộc bầu cử sẽ được hiển thị ở đây.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Top 3 Candidates Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-trophy"></i>
+              </div>
+              <h2 class="card-title">Ứng Cử Viên Dẫn Đầu</h2>
+            </div>
+            
+            <div class="card-content">
+              <div class="top-candidates-container" id="top-candidates">
+                <!-- Top candidates will be added here by JavaScript -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Results Chart Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-chart-pie"></i>
+              </div>
+              <h2 class="card-title">Biểu Đồ Kết Quả</h2>
+            </div>
+            
+            <div class="card-content">
+              <div class="chart-container">
+                <canvas id="results-chart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Results Table Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-table"></i>
+              </div>
+              <h2 class="card-title">Bảng Kết Quả Chi Tiết</h2>
+            </div>
+            
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Tên Ứng Cử Viên</th>
+                    <th>Đảng Phái</th>
+                    <th>Số Phiếu</th>
+                    <th>Tỷ Lệ (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="results-table-body">
+                  <!-- Results will be added here by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Election Statistics Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <h2 class="card-title">Thống Kê Cuộc Bầu Cử</h2>
+            </div>
+            
+            <div class="card-content">
+              <div class="statistics-container">
+                <div class="statistic-item">
+                  <div class="statistic-icon">
+                    <i class="fas fa-users"></i>
+                  </div>
+                  <div class="statistic-info">
+                    <div class="statistic-label">Tổng số cử tri</div>
+                    <div class="statistic-value" id="total-voters">0</div>
+                  </div>
+                </div>
+                
+                <div class="statistic-item">
+                  <div class="statistic-icon">
+                    <i class="fas fa-vote-yea"></i>
+                  </div>
+                  <div class="statistic-info">
+                    <div class="statistic-label">Tổng số phiếu bầu</div>
+                    <div class="statistic-value" id="total-votes">0</div>
+                  </div>
+                </div>
+                
+                <div class="statistic-item">
+                  <div class="statistic-icon">
+                    <i class="fas fa-percentage"></i>
+                  </div>
+                  <div class="statistic-info">
+                    <div class="statistic-label">Tỷ lệ tham gia</div>
+                    <div class="statistic-value" id="turnout-percentage">0%</div>
+                  </div>
+                </div>
+                
+                <div class="statistic-item">
+                  <div class="statistic-icon">
+                    <i class="fas fa-clock"></i>
+                  </div>
+                  <div class="statistic-info">
+                    <div class="statistic-label">Cập nhật lần cuối</div>
+                    <div class="statistic-value" id="last-update-time">--:--:--</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Voters Section -->
     <section class="content-section" id="voters-section" style="display: none;">
       <div class="content-container">
@@ -456,8 +640,6 @@
       </div>
     </section>
 
-    <!-- Results Section -->
-
   </main>
 
   <!-- Footer kiểu Netflix -->
@@ -540,6 +722,13 @@
             if ($('#refreshResults').length) {
               $('#refreshResults').click();
             }
+            // Khởi tạo Result Controller nếu có
+            if (typeof window.initResultController === 'function') {
+              console.log("Khởi tạo Result Controller...");
+              window.initResultController();
+            } else {
+              console.warn("Không tìm thấy hàm initResultController");
+            }
           }, 100);
         }
       });
@@ -548,6 +737,12 @@
       $('.content-section').hide();
       $('#candidates-section').show();
       $('.admin-nav-item[data-section="candidates-section"]').addClass('active');
+      
+      // Khởi tạo Result Controller khi trang đã tải xong
+      if (typeof window.initResultController === 'function') {
+        console.log("Khởi tạo Result Controller khi trang được tải...");
+        window.initResultController();
+      }
     });
   </script>
 

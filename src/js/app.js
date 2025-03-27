@@ -8,6 +8,13 @@ try {
   window.CommissionController = require('./controllers/commission-controller');
   console.log("Đã export CommissionController:", window.CommissionController ? "OK" : "NULL");
   
+  // Import và export ResultController cho trang admin.html
+  const ResultController = require('./controllers/result-controller');
+  window.viewElectionResults = ResultController.viewElectionResults;
+  window.initResultController = ResultController.initResultController;
+  window.loadElectionList = ResultController.loadElectionList;
+  console.log("Đã export ResultController functions:", window.viewElectionResults ? "OK" : "NULL");
+  
   // Kiểm tra các hàm quan trọng đã được export
   console.log("Kiểm tra các hàm đã export:");
   console.log("- getCountCandidates:", typeof window.App.getCountCandidates === 'function' ? "OK" : "MISSING");
